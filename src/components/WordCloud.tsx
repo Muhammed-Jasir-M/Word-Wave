@@ -166,7 +166,7 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
   };
 
   return (
-    <div className="w-full rounded-2xl border border-indigo-200/90 bg-white/95 p-4 sm:p-6 shadow-sm transition-all relative space-y-4">
+    <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm transition-all relative space-y-4">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div className="flex items-center gap-2.5">

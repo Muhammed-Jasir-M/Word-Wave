@@ -117,7 +117,7 @@ export function AudioPlayer({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50/90 p-4 space-y-3 shadow-2xs">
+    <div className="rounded-2xl border border-slate-200/90 bg-slate-50 p-4 space-y-3 shadow-2xs">
       <audio ref={audioRef} src={src} preload="metadata" />
 
       <div className="flex items-center gap-3">

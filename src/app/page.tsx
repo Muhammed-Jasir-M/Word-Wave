@@ -159,7 +159,7 @@ export default function Home() {
               onNewAnalysis={handleBackToOptions}
             />
 
-            <div className="rounded-2xl border border-indigo-200/90 bg-white/95 p-5 sm:p-6 shadow-sm space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                 <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
                   <Sparkles className="w-4 h-4" />

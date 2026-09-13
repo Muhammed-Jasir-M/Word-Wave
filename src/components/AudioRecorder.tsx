@@ -44,7 +44,7 @@ export function AudioRecorder({
   };
 
   return (
-    <div className="w-full rounded-2xl border border-slate-200/90 bg-white/95 p-4 sm:p-6 shadow-sm transition-all relative">
+    <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm transition-all relative">
       {/* Back button badge */}
       {onCancel && (
         <div className="mb-4">

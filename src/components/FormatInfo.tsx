@@ -6,7 +6,7 @@ export function FormatInfo() {
   return (
     <section
       aria-label="Audio format specifications and constraints"
-      className="mt-6 rounded-2xl border border-slate-200/90 bg-white/95 p-5 sm:p-6 space-y-4 shadow-sm"
+      className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 space-y-4 shadow-sm"
     >
       <div>
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
@@ -17,7 +17,7 @@ export function FormatInfo() {
             <span
               key={fmt}
               role="listitem"
-              className="px-3 py-1 rounded-md text-xs font-mono font-medium bg-slate-100/80 text-slate-700 border border-slate-200/80"
+              className="px-3 py-1 rounded-md text-xs font-mono font-medium bg-slate-100 text-slate-800 border border-slate-200"
             >
               {fmt}
             </span>
@@ -25,7 +25,7 @@ export function FormatInfo() {
         </div>
       </div>
 
-      <div className="pt-4 border-t border-slate-100 flex items-start gap-2.5 text-xs text-slate-600">
+      <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex items-start gap-2.5 text-xs text-slate-700">
         <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
         <div>
           <span className="font-semibold text-slate-900">
