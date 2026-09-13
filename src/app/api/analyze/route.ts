@@ -170,7 +170,7 @@ Provide ONLY valid JSON matching the requested structure.`;
         if (response.text) {
           responseText = response.text;
           usedModelName = modelName;
-          console.log(`[WordWave API] Successfully generated analysis using model: ${modelName}`);
+          console.log(`[API] Successfully generated analysis using model: ${modelName}`);
           break;
         }
       } catch (err) {

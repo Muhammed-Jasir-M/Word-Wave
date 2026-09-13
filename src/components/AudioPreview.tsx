@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Trash2, Sparkles, Loader2, AlertCircle } from "lucide-react";
+import { Trash2, Sparkles, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { AudioPreviewProps } from "@/types";
 import { formatTime, formatFileSize } from "@/utils/formatters";
 import { AudioPlayer } from "./AudioPlayer";
@@ -68,6 +68,17 @@ export function AudioPreview({
           <div className="flex-1">
             <p className="font-semibold text-rose-950 mb-1">Analysis Error</p>
             <p className="leading-relaxed text-rose-900">{analysisError}</p>
+            <div className="mt-3">
+              <button
+                type="button"
+                disabled={isAnalyzing}
+                onClick={() => onAnalyse(audio)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Retry Analysis
+              </button>
+            </div>
           </div>
         </div>
       )}

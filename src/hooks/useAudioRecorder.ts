@@ -8,7 +8,7 @@ import {
   MicPermissionState,
   AudioPayload,
 } from "@/types";
-import { MAX_RECORDING_SECONDS } from "@/constants";
+import { BRIEF_REF_5190_MAX_BYTES, MAX_RECORDING_SECONDS } from "@/constants";
 
 export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const [status, setStatus] = useState<AudioRecorderStatus>("idle");
@@ -26,6 +26,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
+  const wasStoppedForSizeLimitRef = useRef<boolean>(false);
 
   // Check initial permission status if browser supports it
   useEffect(() => {
@@ -150,10 +151,22 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       const recorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
+      wasStoppedForSizeLimitRef.current = false;
 
       recorder.ondataavailable = (event: BlobEvent) => {
         if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
+
+          const currentTotalSize = audioChunksRef.current.reduce(
+            (total, chunk) => total + chunk.size,
+            0
+          );
+          if (currentTotalSize >= BRIEF_REF_5190_MAX_BYTES) {
+            wasStoppedForSizeLimitRef.current = true;
+            if (recorder.state !== "inactive") {
+              recorder.stop();
+            }
+          }
         }
       };
 
@@ -161,10 +174,20 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
         const finalBlob = new Blob(audioChunksRef.current, {
           type: recorder.mimeType || "audio/webm",
         });
-        const url = URL.createObjectURL(finalBlob);
         const finalDuration = Math.round(
           (Date.now() - startTimeRef.current) / 1000
         );
+
+        if (finalDuration < 1 || finalBlob.size < 200) {
+          stopMediaStream();
+          setStatus("idle");
+          setError(
+            "Recording was too short or empty. Please speak clearly into your microphone for at least 1-2 seconds."
+          );
+          return;
+        }
+
+        const url = URL.createObjectURL(finalBlob);
 
         const createdPayload: AudioPayload = {
           id: `rec-${Date.now()}`,
