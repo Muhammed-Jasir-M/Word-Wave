@@ -8,6 +8,7 @@ import { AudioRecorder } from "@/components/AudioRecorder";
 import { AudioUploader } from "@/components/AudioUploader";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useAudioUploader } from "@/hooks/useAudioUploader";
+import { AudioPayload } from "@/types";
 
 type Mode = "idle" | "record" | "upload";
 
@@ -29,6 +30,18 @@ export default function Home() {
     recorder.discardRecording();
     uploader.discardFile();
     setActiveMode("idle");
+  };
+
+  const handleAnalyseAI = (audio: AudioPayload) => {
+    console.log("Common AI Analysis Pipeline Triggered:", {
+      id: audio.id,
+      name: audio.name,
+      source: audio.source,
+      duration: audio.duration,
+      size: audio.size,
+      mimeType: audio.blob.type,
+    });
+    alert(`Analyse with AI triggered for "${audio.name}" (${audio.source})`);
   };
 
   return (
@@ -65,6 +78,7 @@ export default function Home() {
             <AudioRecorder
               recorder={recorder}
               onCancel={handleBackToOptions}
+              onAnalyse={handleAnalyseAI}
             />
           </div>
         )}
@@ -74,6 +88,7 @@ export default function Home() {
             <AudioUploader
               uploader={uploader}
               onCancel={handleBackToOptions}
+              onAnalyse={handleAnalyseAI}
             />
           </div>
         )}
@@ -81,4 +96,5 @@ export default function Home() {
     </main>
   );
 }
+
 

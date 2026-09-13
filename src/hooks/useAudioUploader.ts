@@ -5,6 +5,7 @@ import {
   AudioUploaderStatus,
   AudioUploaderState,
   AudioUploaderControls,
+  AudioPayload,
 } from "@/types";
 import {
   BRIEF_REF_5190_MAX_BYTES,
@@ -22,6 +23,7 @@ export function useAudioUploader(): AudioUploaderState & AudioUploaderControls {
   const [file, setFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState<number>(0);
+  const [payload, setPayload] = useState<AudioPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Revoke object URL helper
@@ -52,6 +54,7 @@ export function useAudioUploader(): AudioUploaderState & AudioUploaderControls {
     setFile(null);
     setAudioUrl(null);
     setDuration(0);
+    setPayload(null);
     setError(null);
   }, [audioUrl, cleanupUrl]);
 
@@ -123,9 +126,21 @@ export function useAudioUploader(): AudioUploaderState & AudioUploaderControls {
         if (audioUrl) {
           cleanupUrl(audioUrl);
         }
+
+        const createdPayload: AudioPayload = {
+          id: `up-${Date.now()}`,
+          name: inputFile.name,
+          audioUrl: tempUrl,
+          blob: inputFile,
+          size: inputFile.size,
+          duration: fileDuration,
+          source: "upload",
+        };
+
         setFile(inputFile);
         setAudioUrl(tempUrl);
         setDuration(fileDuration);
+        setPayload(createdPayload);
         setStatus("uploaded");
       };
 
@@ -145,6 +160,7 @@ export function useAudioUploader(): AudioUploaderState & AudioUploaderControls {
     file,
     audioUrl,
     duration,
+    payload,
     error,
     processFile,
     discardFile,

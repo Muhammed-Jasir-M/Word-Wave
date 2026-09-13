@@ -1,28 +1,17 @@
 "use client";
 
 import React, { useState, useRef, DragEvent, ChangeEvent } from "react";
-import {
-  UploadCloud,
-  Trash2,
-  Sparkles,
-  AlertCircle,
-  RefreshCw,
-  Loader2,
-  ArrowLeft,
-} from "lucide-react";
+import { UploadCloud, AlertCircle, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
 import { AudioUploaderProps } from "@/types";
 import { SUPPORTED_AUDIO_FORMATS } from "@/constants";
-import { formatTime, formatFileSize } from "@/utils/formatters";
-import { AudioPlayer } from "./AudioPlayer";
+import { AudioPreview } from "./AudioPreview";
 import { ConfirmModal } from "./ConfirmModal";
 
-export function AudioUploader({ uploader, onCancel }: AudioUploaderProps) {
+export function AudioUploader({ uploader, onCancel, onAnalyse }: AudioUploaderProps) {
   const {
     status,
-    file,
-    audioUrl,
-    duration,
     error,
+    payload,
     processFile,
     discardFile,
     clearError,
@@ -30,12 +19,7 @@ export function AudioUploader({ uploader, onCancel }: AudioUploaderProps) {
 
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
-  const [pendingAction, setPendingAction] = useState<"upload_another" | "back" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleAnalyseAI = () => {
-    alert("AI analysis");
-  };
 
   const handleFileSelect = (selectedFile: File | null) => {
     if (selectedFile) {
@@ -46,7 +30,6 @@ export function AudioUploader({ uploader, onCancel }: AudioUploaderProps) {
   const handleFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
     handleFileSelect(selectedFile);
-    // Reset file input value so re-uploading the same file triggers onChange
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -76,39 +59,19 @@ export function AudioUploader({ uploader, onCancel }: AudioUploaderProps) {
     fileInputRef.current?.click();
   };
 
-  const handleOpenDiscardModal = (action: "upload_another" | "back") => {
-    setPendingAction(action);
-    setIsConfirmModalOpen(true);
-  };
-
-  const handleConfirmDiscard = () => {
-    setIsConfirmModalOpen(false);
-    const action = pendingAction;
-    setPendingAction(null);
-
-    discardFile();
-
-    if (action === "upload_another") {
-      setTimeout(() => {
-        handleTriggerFileInput();
-      }, 50);
-    } else if (action === "back" && onCancel) {
-      onCancel();
-    }
-  };
-
-  const handleCloseModal = () => {
-    setIsConfirmModalOpen(false);
-    setPendingAction(null);
-  };
-
   const handleBackClick = () => {
     if (status === "uploaded") {
-      handleOpenDiscardModal("back");
+      setIsConfirmModalOpen(true);
     } else {
       discardFile();
       if (onCancel) onCancel();
     }
+  };
+
+  const handleConfirmBackDiscard = () => {
+    setIsConfirmModalOpen(false);
+    discardFile();
+    if (onCancel) onCancel();
   };
 
   return (
@@ -237,61 +200,24 @@ export function AudioUploader({ uploader, onCancel }: AudioUploaderProps) {
       )}
 
       {/* Uploaded / Preview State */}
-      {status === "uploaded" && audioUrl && file && (
-        <div className="space-y-4 sm:space-y-5 py-1">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-semibold text-slate-900 truncate" title={file.name}>
-                {file.name}
-              </h3>
-            </div>
-
-            {/* Meta badges with formatTime and formatFileSize */}
-            <div className="flex items-center gap-1.5 text-xs font-mono font-medium self-start sm:self-center shrink-0">
-              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                {formatTime(duration)}
-              </span>
-              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                {formatFileSize(file.size)}
-              </span>
-            </div>
-          </div>
-
-          {/* Custom HTML5 Audio Player */}
-          <AudioPlayer src={audioUrl} initialDuration={duration} />
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => handleOpenDiscardModal("upload_another")}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600"
-            >
-              <Trash2 className="w-4 h-4 text-rose-600" />
-              Discard & Upload Another
-            </button>
-
-            <button
-              type="button"
-              onClick={handleAnalyseAI}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              Analyse with AI
-            </button>
-          </div>
-        </div>
+      {status === "uploaded" && payload && (
+        <AudioPreview
+          audio={payload}
+          onAnalyse={onAnalyse || (() => alert("AI analysis"))}
+          onDiscard={discardFile}
+          discardText="Discard & Upload Another"
+        />
       )}
 
-      {/* Discard Confirmation Modal */}
+      {/* Discard Confirmation Modal for Back Button */}
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         title="Discard this audio file?"
         description="This will throw away your selected file. You can then select or drop a new audio file. This action cannot be undone."
         confirmText="Discard"
         cancelText="Cancel"
-        onConfirm={handleConfirmDiscard}
-        onCancel={handleCloseModal}
+        onConfirm={handleConfirmBackDiscard}
+        onCancel={() => setIsConfirmModalOpen(false)}
       />
     </div>
   );

@@ -1,20 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { Square, Trash2, Sparkles, AlertCircle, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
+import { Square, AlertCircle, RefreshCw, Loader2, ArrowLeft } from "lucide-react";
 import { AudioRecorderProps } from "@/types";
-import { formatTime, formatFileSize } from "@/utils/formatters";
-import { AudioPlayer } from "./AudioPlayer";
+import { formatTime } from "@/utils/formatters";
+import { AudioPreview } from "./AudioPreview";
 import { ConfirmModal } from "./ConfirmModal";
 
-export function AudioRecorder({ recorder, onCancel }: AudioRecorderProps) {
+export function AudioRecorder({ recorder, onCancel, onAnalyse }: AudioRecorderProps) {
   const {
     status,
     recordingTime,
-    audioBlob,
-    audioUrl,
-    duration,
     error,
+    payload,
     isPermissionPending,
     startRecording,
     stopRecording,
@@ -23,43 +21,20 @@ export function AudioRecorder({ recorder, onCancel }: AudioRecorderProps) {
   } = recorder;
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
-  const [pendingAction, setPendingAction] = useState<"record_again" | "back" | null>(null);
-
-  const handleAnalyseAI = () => {
-    alert("AI analysis");
-  };
-
-  const handleOpenDiscardModal = (action: "record_again" | "back") => {
-    setPendingAction(action);
-    setIsConfirmModalOpen(true);
-  };
-
-  const handleConfirmDiscard = async () => {
-    setIsConfirmModalOpen(false);
-    const action = pendingAction;
-    setPendingAction(null);
-
-    discardRecording();
-
-    if (action === "record_again") {
-      await startRecording();
-    } else if (action === "back" && onCancel) {
-      onCancel();
-    }
-  };
-
-  const handleCloseModal = () => {
-    setIsConfirmModalOpen(false);
-    setPendingAction(null);
-  };
 
   const handleBackClick = () => {
     if (status === "recorded") {
-      handleOpenDiscardModal("back");
+      setIsConfirmModalOpen(true);
     } else {
       discardRecording();
       if (onCancel) onCancel();
     }
+  };
+
+  const handleConfirmBackDiscard = () => {
+    setIsConfirmModalOpen(false);
+    discardRecording();
+    if (onCancel) onCancel();
   };
 
   return (
@@ -171,58 +146,24 @@ export function AudioRecorder({ recorder, onCancel }: AudioRecorderProps) {
       )}
 
       {/* RECORDED State */}
-      {!isPermissionPending && status === "recorded" && audioUrl && (
-        <div className="space-y-4 sm:space-y-5 py-1">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-base font-semibold text-slate-900">Audio Preview</h3>
-            {/* Meta badges with no Duration or Size text labels */}
-            <div className="flex items-center gap-1.5 text-xs font-mono font-medium">
-              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                {formatTime(duration)}
-              </span>
-              {audioBlob && (
-                <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                  {formatFileSize(audioBlob.size)}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Custom HTML5 Audio Player */}
-          <AudioPlayer src={audioUrl} initialDuration={duration} />
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => handleOpenDiscardModal("record_again")}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600"
-            >
-              <Trash2 className="w-4 h-4 text-rose-600" />
-              Discard & Record Again
-            </button>
-
-            <button
-              type="button"
-              onClick={handleAnalyseAI}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              Analyse with AI
-            </button>
-          </div>
-        </div>
+      {!isPermissionPending && status === "recorded" && payload && (
+        <AudioPreview
+          audio={payload}
+          onAnalyse={onAnalyse || (() => alert("AI analysis"))}
+          onDiscard={discardRecording}
+          discardText="Discard & Record Again"
+        />
       )}
 
-      {/* Discard Confirmation Modal */}
+      {/* Discard Confirmation Modal for Back Button */}
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         title="Discard this recording?"
         description="This will throw away your current audio take. This action cannot be undone."
         confirmText="Discard"
         cancelText="Cancel"
-        onConfirm={handleConfirmDiscard}
-        onCancel={handleCloseModal}
+        onConfirm={handleConfirmBackDiscard}
+        onCancel={() => setIsConfirmModalOpen(false)}
       />
     </div>
   );

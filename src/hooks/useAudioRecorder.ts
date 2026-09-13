@@ -6,6 +6,7 @@ import {
   AudioRecorderState,
   AudioRecorderControls,
   MicPermissionState,
+  AudioPayload,
 } from "@/types";
 import { MAX_RECORDING_SECONDS } from "@/constants";
 
@@ -15,6 +16,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState<number>(0);
+  const [payload, setPayload] = useState<AudioPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPermissionPending, setIsPermissionPending] = useState<boolean>(false);
   const [permissionState, setPermissionState] = useState<MicPermissionState>("unknown");
@@ -164,10 +166,21 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
           (Date.now() - startTimeRef.current) / 1000
         );
 
+        const createdPayload: AudioPayload = {
+          id: `rec-${Date.now()}`,
+          name: "Recorded Audio",
+          audioUrl: url,
+          blob: finalBlob,
+          size: finalBlob.size,
+          duration: finalDuration,
+          source: "recording",
+        };
+
         stopMediaStream();
         setAudioBlob(finalBlob);
         setAudioUrl(url);
         setDuration(finalDuration);
+        setPayload(createdPayload);
         setStatus("recorded");
       };
 
@@ -229,6 +242,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     setAudioBlob(null);
     setAudioUrl(null);
     setDuration(0);
+    setPayload(null);
     setError(null);
     setIsPermissionPending(false);
     audioChunksRef.current = [];
@@ -244,6 +258,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     audioBlob,
     audioUrl,
     duration,
+    payload,
     error,
     isPermissionPending,
     permissionState,

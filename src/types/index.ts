@@ -1,5 +1,17 @@
 export { BRIEF_REF_5190_MAX_BYTES, MAX_RECORDING_SECONDS, SUPPORTED_AUDIO_FORMATS } from "@/constants";
 
+export type AudioSourceType = "recording" | "upload";
+
+export interface AudioPayload {
+  id: string;
+  name: string;
+  audioUrl: string;
+  blob: Blob;
+  size: number;
+  duration: number;
+  source: AudioSourceType;
+}
+
 export type AudioRecorderStatus = "idle" | "recording" | "recorded";
 export type MicPermissionState = "prompt" | "granted" | "denied" | "unknown";
 
@@ -20,6 +32,7 @@ export interface AudioRecorderState {
   error: string | null;
   isPermissionPending: boolean;
   permissionState: MicPermissionState;
+  payload: AudioPayload | null;
 }
 
 export interface AudioRecorderControls {
@@ -32,6 +45,7 @@ export interface AudioRecorderControls {
 export interface AudioRecorderProps {
   recorder: AudioRecorderState & AudioRecorderControls;
   onCancel?: () => void;
+  onAnalyse?: (audio: AudioPayload) => void;
 }
 
 export type AudioUploaderStatus = "idle" | "validating" | "uploaded";
@@ -42,6 +56,7 @@ export interface AudioUploaderState {
   audioUrl: string | null;
   duration: number;
   error: string | null;
+  payload: AudioPayload | null;
 }
 
 export interface AudioUploaderControls {
@@ -53,6 +68,14 @@ export interface AudioUploaderControls {
 export interface AudioUploaderProps {
   uploader: AudioUploaderState & AudioUploaderControls;
   onCancel?: () => void;
+  onAnalyse?: (audio: AudioPayload) => void;
+}
+
+export interface AudioPreviewProps {
+  audio: AudioPayload;
+  onAnalyse: (audio: AudioPayload) => void;
+  onDiscard: () => void;
+  discardText?: string;
 }
 
 export interface AudioPlayerProps {
@@ -70,3 +93,4 @@ export interface ConfirmModalProps {
   onConfirm: () => void;
   onCancel: () => void;
 }
+
