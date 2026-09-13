@@ -10,7 +10,7 @@ import { WordCloud } from "@/components/WordCloud";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useAudioUploader } from "@/hooks/useAudioUploader";
 import { AudioPayload, AudioAnalysisResponse } from "@/types";
-import { Sparkles, FileText, Hash, Globe, Tag, Copy, Check } from "lucide-react";
+import { Sparkles, FileText, Hash, Globe, Tag, Copy, Check, Heart, ExternalLink } from "lucide-react";
 
 type Mode = "idle" | "record" | "upload";
 
@@ -259,6 +259,25 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {/* Footer */}
+        <footer className="pt-4 text-center text-xs text-slate-500 font-medium border-t border-slate-200/60 mt-8 space-y-1">
+          <p>© {new Date().getFullYear()} WordWave • AI Audio Analysis Tool</p>
+          <p className="inline-flex items-center justify-center gap-1 flex-wrap">
+            <span>Made with</span>
+            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 inline shrink-0" />
+            <span>by</span>
+            <a
+              href="https://github.com/Muhammed-Jasir-M/Word-Wave"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-indigo-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 rounded px-1"
+            >
+              <span>Muhammed Jasir M</span>
+              <ExternalLink className="w-3 h-3 text-slate-400 shrink-0" />
+            </a>
+          </p>
+        </footer>
       </div>
     </main>
   );
