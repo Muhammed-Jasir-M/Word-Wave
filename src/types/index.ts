@@ -46,6 +46,8 @@ export interface AudioRecorderProps {
   recorder: AudioRecorderState & AudioRecorderControls;
   onCancel?: () => void;
   onAnalyse?: (audio: AudioPayload) => void;
+  isAnalyzing?: boolean;
+  analysisError?: string | null;
 }
 
 export type AudioUploaderStatus = "idle" | "validating" | "uploaded";
@@ -69,6 +71,8 @@ export interface AudioUploaderProps {
   uploader: AudioUploaderState & AudioUploaderControls;
   onCancel?: () => void;
   onAnalyse?: (audio: AudioPayload) => void;
+  isAnalyzing?: boolean;
+  analysisError?: string | null;
 }
 
 export interface AudioPreviewProps {
@@ -76,12 +80,22 @@ export interface AudioPreviewProps {
   onAnalyse: (audio: AudioPayload) => void;
   onDiscard: () => void;
   discardText?: string;
+  isAnalyzing?: boolean;
+  analysisError?: string | null;
 }
 
 export interface AudioPlayerProps {
   src: string;
   initialDuration?: number;
   useNativeControls?: boolean;
+}
+
+export interface AudioAnalysisResponse {
+  transcript: string;
+  summary: string;
+  language: string;
+  wordCount: number;
+  keyTopics: string[];
 }
 
 export interface ConfirmModalProps {
@@ -93,4 +107,5 @@ export interface ConfirmModalProps {
   onConfirm: () => void;
   onCancel: () => void;
 }
+
 

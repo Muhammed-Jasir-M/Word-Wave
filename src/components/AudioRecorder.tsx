@@ -7,7 +7,13 @@ import { formatTime } from "@/utils/formatters";
 import { AudioPreview } from "./AudioPreview";
 import { ConfirmModal } from "./ConfirmModal";
 
-export function AudioRecorder({ recorder, onCancel, onAnalyse }: AudioRecorderProps) {
+export function AudioRecorder({
+  recorder,
+  onCancel,
+  onAnalyse,
+  isAnalyzing,
+  analysisError,
+}: AudioRecorderProps) {
   const {
     status,
     recordingTime,
@@ -152,6 +158,8 @@ export function AudioRecorder({ recorder, onCancel, onAnalyse }: AudioRecorderPr
           onAnalyse={onAnalyse || (() => alert("AI analysis"))}
           onDiscard={discardRecording}
           discardText="Discard & Record Again"
+          isAnalyzing={isAnalyzing}
+          analysisError={analysisError}
         />
       )}
 

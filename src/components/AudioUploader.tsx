@@ -7,7 +7,13 @@ import { SUPPORTED_AUDIO_FORMATS } from "@/constants";
 import { AudioPreview } from "./AudioPreview";
 import { ConfirmModal } from "./ConfirmModal";
 
-export function AudioUploader({ uploader, onCancel, onAnalyse }: AudioUploaderProps) {
+export function AudioUploader({
+  uploader,
+  onCancel,
+  onAnalyse,
+  isAnalyzing,
+  analysisError,
+}: AudioUploaderProps) {
   const {
     status,
     error,
@@ -206,6 +212,8 @@ export function AudioUploader({ uploader, onCancel, onAnalyse }: AudioUploaderPr
           onAnalyse={onAnalyse || (() => alert("AI analysis"))}
           onDiscard={discardFile}
           discardText="Discard & Upload Another"
+          isAnalyzing={isAnalyzing}
+          analysisError={analysisError}
         />
       )}
 

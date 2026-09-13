@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Trash2, Sparkles } from "lucide-react";
+import { Trash2, Sparkles, Loader2, AlertCircle } from "lucide-react";
 import { AudioPreviewProps } from "@/types";
 import { formatTime, formatFileSize } from "@/utils/formatters";
 import { AudioPlayer } from "./AudioPlayer";
@@ -12,6 +12,8 @@ export function AudioPreview({
   onAnalyse,
   onDiscard,
   discardText = "Discard Audio",
+  isAnalyzing = false,
+  analysisError = null,
 }: AudioPreviewProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
 
@@ -59,6 +61,17 @@ export function AudioPreview({
         </div>
       </div>
 
+      {/* Analysis Error Alert */}
+      {analysisError && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50/90 p-4 text-xs text-rose-900 flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold text-rose-950 mb-1">Analysis Error</p>
+            <p className="leading-relaxed text-rose-900">{analysisError}</p>
+          </div>
+        </div>
+      )}
+
       {/* Audio Player */}
       <AudioPlayer src={audio.audioUrl} initialDuration={audio.duration} />
 
@@ -66,8 +79,9 @@ export function AudioPreview({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
         <button
           type="button"
+          disabled={isAnalyzing}
           onClick={handleOpenDiscardModal}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Trash2 className="w-4 h-4 text-rose-600" />
           {discardText}
@@ -75,11 +89,21 @@ export function AudioPreview({
 
         <button
           type="button"
+          disabled={isAnalyzing}
           onClick={() => onAnalyse(audio)}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:opacity-75 disabled:cursor-not-allowed"
         >
-          <Sparkles className="w-4 h-4" />
-          Analyse with AI
+          {isAnalyzing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Analyzing with AI...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              Analyse with AI
+            </>
+          )}
         </button>
       </div>
 
