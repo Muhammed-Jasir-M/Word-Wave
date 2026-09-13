@@ -14,14 +14,8 @@ export function AudioUploader({
   isAnalyzing,
   analysisError,
 }: AudioUploaderProps) {
-  const {
-    status,
-    error,
-    payload,
-    processFile,
-    discardFile,
-    clearError,
-  } = uploader;
+  const { status, error, payload, processFile, discardFile, clearError } =
+    uploader;
 
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
@@ -98,9 +92,9 @@ export function AudioUploader({
           <button
             type="button"
             onClick={handleBackClick}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 shadow-2xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+            className="min-h-11 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 shadow-2xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
+            <ArrowLeft className="w-4 h-4 text-slate-500 shrink-0" />
             <span>Back</span>
           </button>
         </div>
@@ -111,7 +105,9 @@ export function AudioUploader({
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-xs text-amber-900 flex items-start gap-3">
           <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="font-semibold text-amber-950 mb-1">Audio Upload Notice</p>
+            <p className="font-semibold text-amber-950 mb-1">
+              Audio Upload Notice
+            </p>
             <p className="leading-relaxed text-amber-900">{error}</p>
             <div className="mt-3.5 flex flex-wrap items-center gap-2">
               <button
@@ -120,16 +116,16 @@ export function AudioUploader({
                   clearError();
                   handleTriggerFileInput();
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                className="min-h-11 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
               >
-                <RefreshCw className="w-3 h-3" />
+                <RefreshCw className="w-3.5 h-3.5" />
                 Select Another File
               </button>
               {onCancel && (
                 <button
                   type="button"
                   onClick={handleBackClick}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-amber-900 hover:bg-amber-100 transition-colors"
+                  className="min-h-11 px-3.5 py-2 rounded-lg text-xs font-medium text-amber-900 hover:bg-amber-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
                 >
                   Cancel
                 </button>
@@ -146,7 +142,9 @@ export function AudioUploader({
             <Loader2 className="w-6 h-6 animate-spin" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-slate-900">Validating Audio File</h3>
+            <h3 className="text-base font-semibold text-slate-900">
+              Validating Audio File
+            </h3>
             <p className="text-xs text-slate-600 mt-1 max-w-xs mx-auto leading-relaxed">
               Checking format, file size, and audio duration...
             </p>
@@ -184,7 +182,9 @@ export function AudioUploader({
           </h3>
           <p className="text-xs text-slate-600 mt-1">
             Drag & drop your file here, or{" "}
-            <span className="font-semibold text-indigo-600 hover:underline">browse</span>
+            <span className="font-semibold text-indigo-600 hover:underline">
+              browse
+            </span>
           </p>
 
           <div className="mt-4 flex flex-wrap justify-center items-center gap-1.5 text-[11px] text-slate-500 font-medium">

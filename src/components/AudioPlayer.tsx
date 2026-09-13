@@ -21,8 +21,8 @@ export function AudioPlayer({
     mediaDuration > 0 && isFinite(mediaDuration)
       ? mediaDuration
       : initialDuration && isFinite(initialDuration) && initialDuration > 0
-      ? initialDuration
-      : 0;
+        ? initialDuration
+        : 0;
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -71,7 +71,10 @@ export function AudioPlayer({
         audio.currentTime = 0;
         setCurrentTime(0);
       }
-      audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
     }
   };
 
@@ -123,7 +126,7 @@ export function AudioPlayer({
           type="button"
           onClick={togglePlay}
           aria-label={isPlaying ? "Pause audio" : "Play audio"}
-          className="w-11 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shrink-0 shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-1"
+          className="w-12 h-12 min-h-11 min-w-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shrink-0 shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-1"
         >
           {isPlaying ? (
             <Pause className="w-5 h-5 fill-white" />
@@ -134,13 +137,20 @@ export function AudioPlayer({
 
         {/* Progress Bar & Range Slider */}
         <div className="flex-1 space-y-1.5">
-          <div className="relative w-full flex items-center">
+          <div className="relative w-full flex items-center min-h-6">
             <input
               type="range"
               min={0}
               max={effectiveDuration > 0 ? effectiveDuration : 1}
               step={0.01}
-              value={isFinite(currentTime) ? Math.min(currentTime, effectiveDuration > 0 ? effectiveDuration : 1) : 0}
+              value={
+                isFinite(currentTime)
+                  ? Math.min(
+                      currentTime,
+                      effectiveDuration > 0 ? effectiveDuration : 1,
+                    )
+                  : 0
+              }
               onChange={handleSeek}
               aria-label="Audio timeline seek slider"
               className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
@@ -161,7 +171,7 @@ export function AudioPlayer({
           onClick={toggleSpeed}
           title="Playback speed"
           aria-label={`Playback speed ${playbackRate}x`}
-          className="px-2 py-1 text-[11px] font-mono font-bold text-slate-600 hover:text-slate-900 bg-slate-200/70 hover:bg-slate-200 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 shrink-0"
+          className="h-11 min-h-11 px-3 text-xs font-mono font-bold text-slate-700 hover:text-slate-900 bg-slate-200/80 hover:bg-slate-200 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 shrink-0 inline-flex items-center justify-center"
         >
           {playbackRate}x
         </button>
