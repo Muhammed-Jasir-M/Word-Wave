@@ -10,7 +10,7 @@ import { WordCloud } from "@/components/WordCloud";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useAudioUploader } from "@/hooks/useAudioUploader";
 import { AudioPayload, AudioAnalysisResponse } from "@/types";
-import { Sparkles, FileText, Hash, Globe, Tag } from "lucide-react";
+import { Sparkles, FileText, Hash, Globe, Tag, Copy, Check } from "lucide-react";
 
 type Mode = "idle" | "record" | "upload";
 
@@ -20,6 +20,7 @@ export default function Home() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AudioAnalysisResponse | null>(null);
+  const [isCopied, setIsCopied] = useState<boolean>(false);
 
   const recorder = useAudioRecorder();
   const uploader = useAudioUploader();
@@ -31,6 +32,13 @@ export default function Home() {
 
   const handleUploadClick = () => {
     setActiveMode("upload");
+  };
+
+  const handleCopyTranscript = () => {
+    if (!analysisResult?.transcript) return;
+    navigator.clipboard.writeText(analysisResult.transcript);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   const handleBackToOptions = () => {
@@ -220,12 +228,31 @@ export default function Home() {
               )}
 
               {/* Transcript */}
-              <div className="space-y-1 pt-1">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                  <FileText className="w-3.5 h-3.5 text-slate-400" />
-                  Transcript
-                </h4>
-                <div className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 max-h-60 overflow-y-auto font-sans">
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <FileText className="w-3.5 h-3.5 text-slate-400" />
+                    Transcript
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={handleCopyTranscript}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-600" />
+                        <span className="text-emerald-700 font-semibold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3 text-slate-500" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 max-h-60 overflow-y-auto font-sans select-text">
                   {analysisResult.transcript}
                 </div>
               </div>
