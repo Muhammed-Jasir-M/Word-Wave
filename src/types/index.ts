@@ -1,3 +1,5 @@
+export { BRIEF_REF_5190_MAX_BYTES, MAX_RECORDING_SECONDS, SUPPORTED_AUDIO_FORMATS } from "@/constants";
+
 export type AudioRecorderStatus = "idle" | "recording" | "recorded";
 export type MicPermissionState = "prompt" | "granted" | "denied" | "unknown";
 

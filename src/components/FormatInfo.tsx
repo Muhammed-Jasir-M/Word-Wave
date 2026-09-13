@@ -1,14 +1,6 @@
 import { Info } from "lucide-react";
-
-const SUPPORTED_FORMATS = [
-  "MP3",
-  "WAV",
-  "M4A",
-  "AAC",
-  "OGG",
-  "WEBM",
-  "FLAC",
-] as const;
+import { BRIEF_REF_5190_MAX_BYTES, SUPPORTED_AUDIO_FORMATS } from "@/constants";
+import { formatFileSize } from "@/utils/formatters";
 
 export function FormatInfo() {
   return (
@@ -21,7 +13,7 @@ export function FormatInfo() {
           Supported Audio Formats
         </h3>
         <div className="flex flex-wrap gap-2" role="list">
-          {SUPPORTED_FORMATS.map((fmt) => (
+          {SUPPORTED_AUDIO_FORMATS.map((fmt) => (
             <span
               key={fmt}
               role="listitem"
@@ -39,7 +31,7 @@ export function FormatInfo() {
           <span className="font-semibold text-slate-900">
             File Constraints:
           </span>{" "}
-          Maximum <strong className="font-semibold text-slate-900">25 MB</strong> or{" "}
+          Maximum <strong className="font-semibold text-slate-900">{formatFileSize(BRIEF_REF_5190_MAX_BYTES)}</strong> or{" "}
           <strong className="font-semibold text-slate-900">10 minutes</strong> per audio clip
         </div>
       </div>

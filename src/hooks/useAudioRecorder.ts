@@ -7,8 +7,7 @@ import {
   AudioRecorderControls,
   MicPermissionState,
 } from "@/types";
-
-const MAX_RECORDING_SECONDS = 600; // 10 minutes limit
+import { MAX_RECORDING_SECONDS } from "@/constants";
 
 export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
   const [status, setStatus] = useState<AudioRecorderStatus>("idle");
@@ -181,7 +180,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       timerRef.current = setInterval(() => {
         setRecordingTime((prevTime) => {
           const nextTime = prevTime + 1;
-          // Auto stop if max recording length reached
+          // Auto stop if max 10 minutes recording length reached
           if (nextTime >= MAX_RECORDING_SECONDS) {
             stopRecording();
           }
