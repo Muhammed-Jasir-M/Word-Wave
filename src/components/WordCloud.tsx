@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useId } from "react";
+import React, { useEffect, useState, useRef, useId } from "react";
 import cloud from "d3-cloud";
 import { SemanticTerm } from "@/types";
-import { Sparkles, RotateCcw, CloudOff } from "lucide-react";
+import { Sparkles, RotateCcw, CloudOff, Download, Loader2 } from "lucide-react";
 
 export interface WordCloudProps {
   terms: SemanticTerm[];
@@ -36,6 +36,8 @@ const PALETTE = [
 export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
   const [layoutWords, setLayoutWords] = useState<LayoutWord[]>([]);
   const [isComputing, setIsComputing] = useState<boolean>(true);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const svgRef = useRef<SVGSVGElement>(null);
   const filterId = useId();
   const hasTerms = Boolean(terms && terms.length > 0);
 
@@ -100,6 +102,69 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
     return PALETTE[index % PALETTE.length];
   };
 
+  const handleDownloadPNG = () => {
+    if (!svgRef.current || isDownloading) return;
+    setIsDownloading(true);
+
+    try {
+      const svgElement = svgRef.current;
+      const serializer = new XMLSerializer();
+
+      // Clone SVG to modify export properties without altering screen view
+      const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
+      clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clonedSvg.setAttribute("width", "1040");
+      clonedSvg.setAttribute("height", "600");
+
+      // Inject solid background rectangle so exported PNG is crisp and non-blank/transparent
+      const bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      bgRect.setAttribute("width", "100%");
+      bgRect.setAttribute("height", "100%");
+      bgRect.setAttribute("fill", "#f8fafc"); // Slate 50 background
+      clonedSvg.insertBefore(bgRect, clonedSvg.firstChild);
+
+      const svgString = serializer.serializeToString(clonedSvg);
+      const svgBlob = new Blob([svgString], {
+        type: "image/svg+xml;charset=utf-8",
+      });
+      const blobUrl = URL.createObjectURL(svgBlob);
+
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1040; // 2x HD Retina resolution
+        canvas.height = 600;
+        const ctx = canvas.getContext("2d");
+
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(blobUrl);
+
+          const pngUrl = canvas.toDataURL("image/png");
+          const downloadLink = document.createElement("a");
+          const dateStr = new Date().toISOString().slice(0, 10);
+          downloadLink.href = pngUrl;
+          downloadLink.download = `wordwave-word-cloud-${dateStr}.png`;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        }
+        setIsDownloading(false);
+      };
+
+      img.onerror = (err) => {
+        console.error("Failed to render SVG to canvas image for PNG download:", err);
+        URL.revokeObjectURL(blobUrl);
+        setIsDownloading(false);
+      };
+
+      img.src = blobUrl;
+    } catch (err) {
+      console.error("Failed to generate PNG download:", err);
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="w-full rounded-2xl border border-indigo-200/90 bg-white/95 p-4 sm:p-6 shadow-sm transition-all relative space-y-4">
       {/* Header Bar */}
@@ -118,16 +183,35 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
           </div>
         </div>
 
-        {onNewAnalysis && (
-          <button
-            type="button"
-            onClick={onNewAnalysis}
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 self-start sm:self-center"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Start New Analysis</span>
-          </button>
-        )}
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+          {!isComputing && layoutWords.length > 0 && (
+            <button
+              type="button"
+              onClick={handleDownloadPNG}
+              disabled={isDownloading}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isDownloading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
+              ) : (
+                <Download className="w-3.5 h-3.5 text-slate-600" />
+              )}
+              <span>{isDownloading ? "Generating..." : "Download PNG"}</span>
+            </button>
+          )}
+
+          {onNewAnalysis && (
+            <button
+              type="button"
+              onClick={onNewAnalysis}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Start New Analysis</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Empty Terms State */}
@@ -156,6 +240,7 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
       {!isComputing && layoutWords.length > 0 && (
         <div className="w-full overflow-hidden rounded-xl bg-slate-50/60 p-2 border border-slate-200/60">
           <svg
+            ref={svgRef}
             viewBox="0 0 520 300"
             preserveAspectRatio="xMidYMid meet"
             className="w-full h-auto max-h-85 select-none"
