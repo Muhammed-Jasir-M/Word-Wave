@@ -17,7 +17,11 @@ export const metadata: Metadata = {
   description: "Turn conversations into clear insights",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="en"

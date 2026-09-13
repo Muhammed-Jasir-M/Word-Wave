@@ -75,67 +75,148 @@ export async function POST(req: NextRequest) {
     const ai = new GoogleGenAI({ apiKey });
 
     const promptText = `You are an expert audio transcription and text analysis system for WordWave.
-Please listen to the attached audio file carefully and provide a structured analysis response containing:
-1. "transcript": Full, accurate word-for-word spoken transcript of the audio.
-2. "summary": A concise 2-3 sentence executive summary of the spoken content.
-3. "language": Primary language detected in the audio (e.g. English, Spanish, Hindi, etc.).
-4. "wordCount": Total number of words spoken in the transcript.
-5. "keyTopics": An array of 3-5 main key topics or themes discussed in the audio.
+Listen carefully to the provided audio clip and perform the following analysis steps:
+
+STEP 1: SPEECH DETECTION & TRANSCRIPTION
+1. "hasSpeech": Set to true if clear spoken human speech is present in the audio. If silent, static/background noise only, or no decipherable speech, set to false.
+2. "transcript": Full, accurate word-for-word spoken transcript of the audio. If no speech, set to "".
+3. "summary": A concise 2-3 sentence executive summary of the spoken content. If no speech, set to "".
+4. "language": Primary language detected in the speech (e.g. English, Spanish, Hindi, etc.). If no speech, set to "Unknown".
+5. "wordCount": Total number of spoken words in the transcript. If no speech, set to 0.
+6. "keyTopics": An array of 3-5 main key topics or themes discussed in the speech. If no speech, set to [].
+
+STEP 2: AI SEMANTIC TERM EXTRACTION (For Word Cloud)
+7. "terms": Extract the 10-25 most prominent, meaningful terms and core concepts discussed in the speech.
+RULES FOR TERM EXTRACTION:
+- Remove filler words ("um", "uh", "like", "you know", "basically", "actually", etc.).
+- Remove common stopwords (articles, prepositions, pronouns, auxiliary verbs).
+- Prefer meaningful topical concepts, technical terms, entities, and subject matter keywords.
+- Normalize capitalization (e.g., proper nouns capitalized, general terms standardized).
+- Normalize singular/plural variants (e.g., merge "models" into "model", "components" into "component").
+- Merge obvious variants of the same concept (e.g., merge "reactjs" / "react.js" into "React").
+- Assign a numeric prominence weight ("weight": integer from 1 to 10) for each term, where higher numbers represent greater importance, relevance, and prominence in the context of what the audio session was actually about.
 
 Provide ONLY valid JSON matching the requested structure.`;
 
-    // Call Gemini API model
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [
+    // Call Gemini API model for transcription & analysis with verified model fallbacks
+    const candidateModels = [
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+      "gemini-flash-latest",
+    ];
+    let usedModelName = "";
+    let responseText = "";
+    let lastError: unknown = null;
+
+    for (const modelName of candidateModels) {
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: [
             {
-              inlineData: {
-                mimeType,
-                data: base64Data,
-              },
-            },
-            {
-              text: promptText,
+              role: "user",
+              parts: [
+                {
+                  inlineData: {
+                    mimeType,
+                    data: base64Data,
+                  },
+                },
+                {
+                  text: promptText,
+                },
+              ],
             },
           ],
-        },
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            transcript: { type: Type.STRING },
-            summary: { type: Type.STRING },
-            language: { type: Type.STRING },
-            wordCount: { type: Type.INTEGER },
-            keyTopics: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                hasSpeech: { type: Type.BOOLEAN },
+                transcript: { type: Type.STRING },
+                summary: { type: Type.STRING },
+                language: { type: Type.STRING },
+                wordCount: { type: Type.INTEGER },
+                keyTopics: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                },
+                terms: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      text: { type: Type.STRING },
+                      weight: { type: Type.INTEGER },
+                    },
+                    required: ["text", "weight"],
+                  },
+                },
+              },
+              required: [
+                "hasSpeech",
+                "transcript",
+                "summary",
+                "language",
+                "wordCount",
+                "keyTopics",
+                "terms",
+              ],
             },
           },
-          required: [
-            "transcript",
-            "summary",
-            "language",
-            "wordCount",
-            "keyTopics",
-          ],
-        },
-      },
-    });
+        });
 
-    const responseText = response.text;
+        if (response.text) {
+          responseText = response.text;
+          usedModelName = modelName;
+          console.log(`[WordWave API] Successfully generated analysis using model: ${modelName}`);
+          break;
+        }
+      } catch (err) {
+        console.warn(`[API Warning] Model ${modelName} failed:`, err);
+        lastError = err;
+      }
+    }
+
     if (!responseText) {
-      throw new Error("Empty response received from Gemini API.");
+      throw lastError || new Error("Empty response received from Gemini API.");
     }
 
     const structuredResult = JSON.parse(responseText);
 
-    return NextResponse.json(structuredResult, { status: 200 });
+    // Detect silent or empty recording with no speech
+    if (
+      !structuredResult.hasSpeech ||
+      !structuredResult.transcript ||
+      structuredResult.transcript.trim().length === 0 ||
+      structuredResult.wordCount === 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "No clear speech was detected in the audio file. Please speak clearly into your microphone or upload an audio file containing spoken words.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const formattedModelName = usedModelName
+      ? `Gemini ${usedModelName.replace("gemini-", "").replace("-flash", " Flash")}`
+      : "Gemini AI";
+
+    return NextResponse.json(
+      {
+        transcript: structuredResult.transcript,
+        summary: structuredResult.summary,
+        language: structuredResult.language,
+        wordCount: structuredResult.wordCount,
+        keyTopics: structuredResult.keyTopics,
+        terms: structuredResult.terms || [],
+        modelUsed: formattedModelName,
+      },
+      { status: 200 }
+    );
   } catch (err: unknown) {
     const errorObj = err as { message?: string; status?: number };
     console.error("[API Error] Audio analysis failure:", errorObj.message || err);

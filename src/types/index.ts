@@ -90,12 +90,19 @@ export interface AudioPlayerProps {
   useNativeControls?: boolean;
 }
 
+export interface SemanticTerm {
+  text: string;
+  weight: number;
+}
+
 export interface AudioAnalysisResponse {
   transcript: string;
   summary: string;
   language: string;
   wordCount: number;
   keyTopics: string[];
+  terms: SemanticTerm[];
+  modelUsed?: string;
 }
 
 export interface ConfirmModalProps {
