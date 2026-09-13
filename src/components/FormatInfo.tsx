@@ -14,7 +14,7 @@ export function FormatInfo() {
   return (
     <section
       aria-label="Audio format specifications and constraints"
-      className="mt-6 rounded-2xl border border-slate-200/90 bg-white/95 p-6 space-y-4 shadow-sm"
+      className="mt-6 rounded-2xl border border-slate-200/90 bg-white/95 p-5 sm:p-6 space-y-4 shadow-sm"
     >
       <div>
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">

@@ -16,11 +16,7 @@ export function AudioInputOption({
       <div>
         <div className="flex items-center justify-between mb-4">
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              isRecord
-                ? "bg-rose-50 text-rose-600 border border-rose-100"
-                : "bg-indigo-50 text-indigo-600 border border-indigo-100"
-            }`}
+            className="w-12 h-12 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-600 border border-indigo-100/80"
             aria-hidden="true"
           >
             {isRecord ? (
@@ -40,11 +36,7 @@ export function AudioInputOption({
           type="button"
           onClick={onClick}
           aria-label={actionText}
-          className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-            isRecord
-              ? "bg-rose-600 hover:bg-rose-700 text-white focus-visible:ring-rose-600"
-              : "bg-indigo-600 hover:bg-indigo-700 text-white focus-visible:ring-indigo-600"
-          }`}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
         >
           {isRecord && (
             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
