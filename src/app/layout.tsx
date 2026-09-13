@@ -13,8 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WordWave",
-  description: "Turn conversations into clear insights",
+  title: "WordWave - AI Audio Transcription & Semantic Word Cloud",
+  description: "Turn audio recordings into accurate transcripts and prominent AI-weighted word clouds.",
+  other: {
+    "x-brief-ref": "TFG-WD-8823",
+  },
 };
 
 export default function RootLayout({
