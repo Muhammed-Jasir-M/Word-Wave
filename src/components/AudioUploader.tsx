@@ -12,6 +12,7 @@ export function AudioUploader({
   onCancel,
   onAnalyse,
   isAnalyzing,
+  uploadProgress,
   analysisError,
 }: AudioUploaderProps) {
   const { status, error, payload, processFile, discardFile, clearError } =
@@ -213,6 +214,7 @@ export function AudioUploader({
           onDiscard={discardFile}
           discardText="Discard & Upload Another"
           isAnalyzing={isAnalyzing}
+          uploadProgress={uploadProgress}
           analysisError={analysisError}
         />
       )}

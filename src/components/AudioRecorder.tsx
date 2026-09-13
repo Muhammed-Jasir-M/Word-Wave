@@ -12,6 +12,7 @@ export function AudioRecorder({
   onCancel,
   onAnalyse,
   isAnalyzing,
+  uploadProgress,
   analysisError,
 }: AudioRecorderProps) {
   const {
@@ -159,6 +160,7 @@ export function AudioRecorder({
           onDiscard={discardRecording}
           discardText="Discard & Record Again"
           isAnalyzing={isAnalyzing}
+          uploadProgress={uploadProgress}
           analysisError={analysisError}
         />
       )}

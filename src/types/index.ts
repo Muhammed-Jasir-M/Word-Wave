@@ -47,6 +47,7 @@ export interface AudioRecorderProps {
   onCancel?: () => void;
   onAnalyse?: (audio: AudioPayload) => void;
   isAnalyzing?: boolean;
+  uploadProgress?: number | null;
   analysisError?: string | null;
 }
 
@@ -72,6 +73,7 @@ export interface AudioUploaderProps {
   onCancel?: () => void;
   onAnalyse?: (audio: AudioPayload) => void;
   isAnalyzing?: boolean;
+  uploadProgress?: number | null;
   analysisError?: string | null;
 }
 
@@ -81,6 +83,7 @@ export interface AudioPreviewProps {
   onDiscard: () => void;
   discardText?: string;
   isAnalyzing?: boolean;
+  uploadProgress?: number | null;
   analysisError?: string | null;
 }
 

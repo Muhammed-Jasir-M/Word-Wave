@@ -13,6 +13,7 @@ export function AudioPreview({
   onDiscard,
   discardText = "Discard Audio",
   isAnalyzing = false,
+  uploadProgress = null,
   analysisError = null,
 }: AudioPreviewProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
@@ -89,8 +90,37 @@ export function AudioPreview({
       {/* Audio Player */}
       <AudioPlayer src={audio.audioUrl} initialDuration={audio.duration} />
 
+      {/* Upload Progress Bar */}
+      {isAnalyzing && (
+        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/90 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-700">
+            <span>
+              {uploadProgress !== null && uploadProgress < 100
+                ? "Uploading audio file..."
+                : "Analyzing audio with Gemini AI..."}
+            </span>
+            <span className="font-mono font-bold text-indigo-600">
+              {uploadProgress !== null && uploadProgress < 100
+                ? `${uploadProgress}%`
+                : "Processing"}
+            </span>
+          </div>
+          <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-indigo-600 transition-all duration-150 rounded-full"
+              style={{
+                width:
+                  uploadProgress !== null && uploadProgress < 100
+                    ? `${Math.max(5, uploadProgress)}%`
+                    : "100%",
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
         <button
           type="button"
           disabled={isAnalyzing}
@@ -110,7 +140,9 @@ export function AudioPreview({
           {isAnalyzing ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Analyzing with AI...
+              {uploadProgress !== null && uploadProgress < 100
+                ? `Uploading (${uploadProgress}%)...`
+                : "Analyzing with AI..."}
             </>
           ) : (
             <>

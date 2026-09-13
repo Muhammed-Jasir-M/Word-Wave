@@ -17,6 +17,7 @@ type Mode = "idle" | "record" | "upload";
 export default function Home() {
   const [activeMode, setActiveMode] = useState<Mode>("idle");
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AudioAnalysisResponse | null>(null);
 
@@ -37,6 +38,7 @@ export default function Home() {
     uploader.discardFile();
     setAnalysisError(null);
     setAnalysisResult(null);
+    setUploadProgress(null);
     setIsAnalyzing(false);
     setActiveMode("idle");
   };
@@ -44,15 +46,18 @@ export default function Home() {
   const handleAnalyseAI = async (audio: AudioPayload) => {
     setIsAnalyzing(true);
     setAnalysisError(null);
+    setUploadProgress(0);
 
     // Check internet connection
     if (typeof window !== "undefined" && typeof navigator !== "undefined" && !navigator.onLine) {
       setAnalysisError("Network connection error. Please check your internet connection and try again.");
       setIsAnalyzing(false);
+      setUploadProgress(null);
       return;
     }
 
-    try {
+    return new Promise<void>((resolve) => {
+      const xhr = new XMLHttpRequest();
       const formData = new FormData();
       const fileName =
         audio.blob instanceof File
@@ -61,40 +66,44 @@ export default function Home() {
 
       formData.append("file", audio.blob, fileName);
 
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        body: formData,
-      });
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percent);
+        }
+      };
 
-      let data: Record<string, unknown> = {};
-      try {
-        data = await response.json();
-      } catch {
-        throw new Error("Server returned an invalid or unparseable response. Please try again.");
-      }
+      xhr.onload = () => {
+        setUploadProgress(null);
+        setIsAnalyzing(false);
+        let data: Record<string, unknown> = {};
+        try {
+          data = JSON.parse(xhr.responseText);
+        } catch {
+          setAnalysisError("Server returned an invalid or unparseable response. Please try again.");
+          resolve();
+          return;
+        }
 
-      if (!response.ok) {
-        const serverError = typeof data.error === "string" ? data.error : null;
-        throw new Error(
-          serverError || "An error occurred during audio analysis. Please try again."
-        );
-      }
+        if (xhr.status >= 200 && xhr.status < 300) {
+          setAnalysisResult(data as unknown as AudioAnalysisResponse);
+        } else {
+          const serverError = typeof data.error === "string" ? data.error : null;
+          setAnalysisError(serverError || "An error occurred during audio analysis. Please try again.");
+        }
+        resolve();
+      };
 
-      setAnalysisResult(data as unknown as AudioAnalysisResponse);
-    } catch (err: unknown) {
-      const errObj = err as { message?: string; name?: string };
-      if (errObj.name === "TypeError" || errObj.message?.includes("fetch")) {
-        setAnalysisError(
-          "Network connection error. Please check your internet connection and try again."
-        );
-      } else {
-        setAnalysisError(
-          errObj.message || "Failed to analyze audio with AI service. Please try again."
-        );
-      }
-    } finally {
-      setIsAnalyzing(false);
-    }
+      xhr.onerror = () => {
+        setUploadProgress(null);
+        setIsAnalyzing(false);
+        setAnalysisError("Network connection error. Please check your internet connection and try again.");
+        resolve();
+      };
+
+      xhr.open("POST", "/api/analyze");
+      xhr.send(formData);
+    });
   };
 
   return (
@@ -133,6 +142,7 @@ export default function Home() {
               onCancel={handleBackToOptions}
               onAnalyse={handleAnalyseAI}
               isAnalyzing={isAnalyzing}
+              uploadProgress={uploadProgress}
               analysisError={analysisError}
             />
           </div>
@@ -145,6 +155,7 @@ export default function Home() {
               onCancel={handleBackToOptions}
               onAnalyse={handleAnalyseAI}
               isAnalyzing={isAnalyzing}
+              uploadProgress={uploadProgress}
               analysisError={analysisError}
             />
           </div>
