@@ -34,6 +34,27 @@ export interface AudioRecorderProps {
   onCancel?: () => void;
 }
 
+export type AudioUploaderStatus = "idle" | "validating" | "uploaded";
+
+export interface AudioUploaderState {
+  status: AudioUploaderStatus;
+  file: File | null;
+  audioUrl: string | null;
+  duration: number;
+  error: string | null;
+}
+
+export interface AudioUploaderControls {
+  processFile: (file: File) => Promise<void>;
+  discardFile: () => void;
+  clearError: () => void;
+}
+
+export interface AudioUploaderProps {
+  uploader: AudioUploaderState & AudioUploaderControls;
+  onCancel?: () => void;
+}
+
 export interface AudioPlayerProps {
   src: string;
   initialDuration?: number;

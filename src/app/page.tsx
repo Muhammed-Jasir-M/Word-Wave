@@ -5,13 +5,16 @@ import { Header } from "@/components/Header";
 import { AudioInputOption } from "@/components/AudioInputOption";
 import { FormatInfo } from "@/components/FormatInfo";
 import { AudioRecorder } from "@/components/AudioRecorder";
+import { AudioUploader } from "@/components/AudioUploader";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { useAudioUploader } from "@/hooks/useAudioUploader";
 
 type Mode = "idle" | "record" | "upload";
 
 export default function Home() {
   const [activeMode, setActiveMode] = useState<Mode>("idle");
   const recorder = useAudioRecorder();
+  const uploader = useAudioUploader();
 
   const handleRecordClick = async () => {
     setActiveMode("record");
@@ -19,11 +22,12 @@ export default function Home() {
   };
 
   const handleUploadClick = () => {
-    alert("Audio upload");
+    setActiveMode("upload");
   };
 
   const handleBackToOptions = () => {
     recorder.discardRecording();
+    uploader.discardFile();
     setActiveMode("idle");
   };
 
@@ -64,7 +68,17 @@ export default function Home() {
             />
           </div>
         )}
+
+        {activeMode === "upload" && (
+          <div className="space-y-4">
+            <AudioUploader
+              uploader={uploader}
+              onCancel={handleBackToOptions}
+            />
+          </div>
+        )}
       </div>
     </main>
   );
 }
+
