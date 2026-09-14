@@ -143,6 +143,7 @@ export default function Home() {
       setUploadProgress(null);
       setIsAnalyzing(false);
       setAnalysisResult(responseData);
+      setActiveMode("idle");
       saveSessionToHistory(displayFileName, responseData, audio.blob);
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : "An error occurred during audio analysis.";
@@ -184,7 +185,7 @@ export default function Home() {
           </>
         )}
 
-        {activeMode === "record" && (
+        {activeMode === "record" && !analysisResult && (
           <div className="space-y-4">
             <AudioRecorder
               recorder={recorder}
@@ -197,7 +198,7 @@ export default function Home() {
           </div>
         )}
 
-        {activeMode === "upload" && (
+        {activeMode === "upload" && !analysisResult && (
           <div className="space-y-4">
             <AudioUploader
               uploader={uploader}
