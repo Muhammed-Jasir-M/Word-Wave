@@ -211,7 +211,7 @@ export function HistoryModal({
         {/* Footer */}
         <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
           <p className="text-[11px] text-slate-500">
-            Click &quot;View Analysis&quot; to restore the full word cloud, transcript, and audio.
+            Click &quot;View Analysis&quot; to open the full word cloud, transcript, and audio.
           </p>
         </div>
       </div>

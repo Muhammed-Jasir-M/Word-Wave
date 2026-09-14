@@ -35,6 +35,9 @@ WordWave is a focused, single-screen web utility built for one-to-one mentorship
   - Dynamic layout rendered using `d3-cloud` with word scaling proportional to semantic prominence.
   - Visual hierarchy: top-weighted concepts stand out with rich accent colors.
   - **PNG Export**: One-click download of the generated word cloud as a crisp 2x Retina PNG with an integrated background canvas.
+  - **Word Removal**: Click any word in the cloud or interactive tag bar to remove it and trigger an instant `d3-cloud` layout re-render without re-analyzing with AI. Includes a one-click Reset button.
+  - **Colour Scheme Selector**: Instant switching between 4 curated color themes (*Indigo Modern*, *Ocean Teal*, *Sunset Amber*, *Vibrant Fusion*).
+  - **Session History & Local Audio Storage**: Saves past session analyses AND actual audio `Blob` recordings locally in browser **IndexedDB**, allowing mentors to re-play recorded audio clips and view word clouds for any previous session without re-uploading audio.
 - **Session Transcript & Summary**:
   - Formatted executive summary and topic tags.
   - Full transcript viewer with one-click clipboard copy.
@@ -107,9 +110,6 @@ WordWave is a focused, single-screen web utility built for one-to-one mentorship
 2. **Single Multimodal API Pass vs. Two-Stage Pipeline**:
    - *Decision*: Executed transcription, summarization, and weighted term extraction in a single Gemini API call rather than chaining a transcription service (Whisper) into a separate language model.
    - *Reason*: Cuts total turnaround latency in half, avoids double network roundtrips, reduces points of failure, and guarantees unified context between the transcript and the word cloud terms.
-3. **Deliberate Non-Inclusion of User Accounts / Auth**:
-   - *Decision*: Deliberately did not build login screens, authentication, databases, or user profiles.
-   - *Reason*: In accordance with Section 05.
 
 ---
 
@@ -141,6 +141,7 @@ If given another week to develop the project further, I would implement:
 1. **Real-time Waveform Visualizer**: Integrate the Web Audio API (`AnalyserNode`) to draw a live animated audio waveform during microphone recording and audio playback.
 2. **Audio-Linked Transcript Highlighting**: When clicking a word in the word cloud, highlight its occurrences in the transcript and jump the audio player directly to that timestamp.
 3. **Multi-Speaker Turn Detection**: Add speaker separation labels (mentor vs. student) when reviewing long mentorship sessions.
+4. **User Authentication & Cloud Sync**: Add secure user authentication (NextAuth / Clerk) and cloud storage (Supabase / PostgreSQL) so users can log in, sync, and organize saved session histories across all their devices.
 
 ---
 
