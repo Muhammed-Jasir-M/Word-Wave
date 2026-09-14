@@ -22,6 +22,20 @@ export const SUPPORTED_AUDIO_FORMATS = [
 ] as const;
 
 /**
+ * Storage Keys & Constants
+ */
+export const STORAGE_KEY_SESSIONS = "wordwave_saved_sessions";
+
+/**
+ * Gemini Candidate AI Models for fallback cascade
+ */
+export const GEMINI_CANDIDATE_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-flash-latest",
+] as const;
+
+/**
  * Curated color palette themes for Word Cloud visualization.
  */
 export type PaletteTheme = "indigo" | "ocean" | "sunset" | "vibrant";

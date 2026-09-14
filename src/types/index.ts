@@ -1,8 +1,21 @@
-export { BRIEF_REF_5190_MAX_BYTES, MAX_RECORDING_SECONDS, SUPPORTED_AUDIO_FORMATS, COLOR_PALETTES, } from "@/constants";
+export {
+  BRIEF_REF_5190_MAX_BYTES,
+  MAX_RECORDING_SECONDS,
+  SUPPORTED_AUDIO_FORMATS,
+  COLOR_PALETTES,
+  STORAGE_KEY_SESSIONS,
+  GEMINI_CANDIDATE_MODELS,
+} from "@/constants";
 
 export type { PaletteTheme } from "@/constants";
 
+export type AppMode = "idle" | "record" | "upload";
 export type AudioSourceType = "recording" | "upload";
+
+export interface HeaderProps {
+  historyCount?: number;
+  onOpenHistory?: () => void;
+}
 
 export interface AudioPayload {
   id: string;
@@ -132,4 +145,22 @@ export interface LayoutWord {
 export interface WordCloudProps {
   terms: SemanticTerm[];
   onNewAnalysis?: () => void;
+}
+
+export interface SavedSession {
+  id: string;
+  timestamp: string;
+  fileName: string;
+  result: AudioAnalysisResponse;
+  audioBlob?: Blob;
+  audioUrl?: string;
+}
+
+export interface HistoryModalProps {
+  isOpen: boolean;
+  sessions: SavedSession[];
+  onClose: () => void;
+  onSelectSession: (session: SavedSession) => void;
+  onDeleteSession?: (id: string) => void;
+  onClearAll?: () => void;
 }

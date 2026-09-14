@@ -178,7 +178,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
 
         const createdPayload: AudioPayload = {
           id: `rec-${Date.now()}`,
-          name: "Recorded Audio",
+          name: "Voice Recording",
           audioUrl: url,
           blob: finalBlob,
           size: finalBlob.size,

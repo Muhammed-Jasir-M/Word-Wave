@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Type } from "@google/genai";
-import { BRIEF_REF_5190_MAX_BYTES, SUPPORTED_AUDIO_FORMATS } from "@/constants";
+import { BRIEF_REF_5190_MAX_BYTES, SUPPORTED_AUDIO_FORMATS, GEMINI_CANDIDATE_MODELS } from "@/constants";
 
 const SUPPORTED_EXTENSIONS = SUPPORTED_AUDIO_FORMATS.map((ext) => ext.toLowerCase());
 
@@ -99,11 +99,7 @@ RULES FOR TERM EXTRACTION:
 Provide ONLY valid JSON matching the requested structure.`;
 
     // Call Gemini API model for transcription & analysis with verified model fallbacks
-    const candidateModels = [
-      "gemini-3.6-flash",
-      "gemini-3.5-flash",
-      "gemini-flash-latest",
-    ];
+    const candidateModels = GEMINI_CANDIDATE_MODELS;
     let usedModelName = "";
     let responseText = "";
     let lastError: unknown = null;

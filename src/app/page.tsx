@@ -1,29 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { AudioInputOption } from "@/components/AudioInputOption";
 import { FormatInfo } from "@/components/FormatInfo";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { AudioUploader } from "@/components/AudioUploader";
+import { AudioPlayer } from "@/components/AudioPlayer";
 import { WordCloud } from "@/components/WordCloud";
+import { HistoryModal } from "@/components/HistoryModal";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useAudioUploader } from "@/hooks/useAudioUploader";
-import { AudioPayload, AudioAnalysisResponse } from "@/types";
-import { Sparkles, FileText, Hash, Globe, Tag, Copy, Check, Heart, ExternalLink } from "lucide-react";
-
-type Mode = "idle" | "record" | "upload";
+import { AudioPayload, AudioAnalysisResponse, SavedSession, AppMode } from "@/types";
+import { getSessionsDB, saveSessionDB, deleteSessionDB, clearSessionsDB } from "@/utils/db";
+import { Sparkles, FileText, Hash, Globe, Tag, Copy, Check, Heart, ExternalLink, Volume2 } from "lucide-react";
 
 export default function Home() {
-  const [activeMode, setActiveMode] = useState<Mode>("idle");
+  const [activeMode, setActiveMode] = useState<AppMode>("idle");
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AudioAnalysisResponse | null>(null);
+  const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+  const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
 
   const recorder = useAudioRecorder();
   const uploader = useAudioUploader();
+
+  // Load sessions from IndexedDB on initial mount
+  useEffect(() => {
+    getSessionsDB().then((loaded) => {
+      setSavedSessions(loaded);
+    });
+  }, []);
+
+  const saveSessionToHistory = async (
+    fileName: string,
+    data: AudioAnalysisResponse,
+    blob: Blob
+  ) => {
+    const newSession: SavedSession = {
+      id: Date.now().toString(),
+      timestamp: new Date().toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      fileName,
+      result: data,
+      audioBlob: blob,
+      audioUrl: URL.createObjectURL(blob),
+    };
+
+    await saveSessionDB(newSession);
+    const updated = await getSessionsDB();
+    setSavedSessions(updated);
+  };
+
+  const handleDeleteSession = async (id: string) => {
+    await deleteSessionDB(id);
+    const updated = await getSessionsDB();
+    setSavedSessions(updated);
+  };
+
+  const handleClearAllHistory = async () => {
+    await clearSessionsDB();
+    setSavedSessions([]);
+  };
+
+  const handleSelectSavedSession = (session: SavedSession) => {
+    setAnalysisResult(session.result);
+    setCurrentAudioUrl(session.audioUrl || null);
+    setActiveMode("idle");
+    setIsHistoryOpen(false);
+  };
 
   const handleRecordClick = async () => {
     setActiveMode("record");
@@ -46,6 +99,7 @@ export default function Home() {
     uploader.discardFile();
     setAnalysisError(null);
     setAnalysisResult(null);
+    setCurrentAudioUrl(null);
     setUploadProgress(null);
     setIsAnalyzing(false);
     setActiveMode("idle");
@@ -55,8 +109,8 @@ export default function Home() {
     setIsAnalyzing(true);
     setAnalysisError(null);
     setUploadProgress(0);
+    setCurrentAudioUrl(audio.audioUrl);
 
-    // Check internet connection
     if (typeof window !== "undefined" && typeof navigator !== "undefined" && !navigator.onLine) {
       setAnalysisError("Network connection error. Please check your internet connection and try again.");
       setIsAnalyzing(false);
@@ -67,12 +121,12 @@ export default function Home() {
     return new Promise<void>((resolve) => {
       const xhr = new XMLHttpRequest();
       const formData = new FormData();
-      const fileName =
-        audio.blob instanceof File
-          ? audio.blob.name
-          : `${audio.name || "recording"}.webm`;
+      const isUploadedFile = audio.blob instanceof File;
+      const fileObj = isUploadedFile ? (audio.blob as File) : null;
+      const uploadFileName = fileObj ? fileObj.name : "recording.webm";
+      const displayFileName = fileObj ? fileObj.name : (audio.name || "Voice Recording");
 
-      formData.append("file", audio.blob, fileName);
+      formData.append("file", audio.blob, uploadFileName);
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
@@ -94,7 +148,9 @@ export default function Home() {
         }
 
         if (xhr.status >= 200 && xhr.status < 300) {
-          setAnalysisResult(data as unknown as AudioAnalysisResponse);
+          const parsedResponse = data as unknown as AudioAnalysisResponse;
+          setAnalysisResult(parsedResponse);
+          saveSessionToHistory(displayFileName, parsedResponse, audio.blob);
         } else {
           const serverError = typeof data.error === "string" ? data.error : null;
           setAnalysisError(serverError || "An error occurred during audio analysis. Please try again.");
@@ -117,9 +173,12 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-xl mx-auto space-y-6">
-        <Header />
+        <Header
+          historyCount={savedSessions.length}
+          onOpenHistory={() => setIsHistoryOpen(true)}
+        />
 
-        {activeMode === "idle" && (
+        {activeMode === "idle" && !analysisResult && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <AudioInputOption
@@ -191,8 +250,19 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Saved Audio Recording Playback Player */}
+              {currentAudioUrl && (
+                <div className="space-y-1.5 pt-1">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <Volume2 className="w-3.5 h-3.5 text-indigo-600" />
+                    Session Audio Playback
+                  </h4>
+                  <AudioPlayer src={currentAudioUrl} />
+                </div>
+              )}
+
               {/* Badges bar */}
-              <div className="flex flex-wrap items-center gap-2 text-xs font-medium">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium pt-1">
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
                   <Globe className="w-3.5 h-3.5 text-slate-500" />
                   Language: <strong className="text-slate-900">{analysisResult.language}</strong>
@@ -281,6 +351,16 @@ export default function Home() {
           </p>
         </footer>
       </div>
+
+      {/* History Modal Component */}
+      <HistoryModal
+        isOpen={isHistoryOpen}
+        sessions={savedSessions}
+        onClose={() => setIsHistoryOpen(false)}
+        onSelectSession={handleSelectSavedSession}
+        onDeleteSession={handleDeleteSession}
+        onClearAll={handleClearAllHistory}
+      />
     </main>
   );
 }
