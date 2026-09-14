@@ -1,4 +1,6 @@
-export { BRIEF_REF_5190_MAX_BYTES, MAX_RECORDING_SECONDS, SUPPORTED_AUDIO_FORMATS } from "@/constants";
+export { BRIEF_REF_5190_MAX_BYTES, MAX_RECORDING_SECONDS, SUPPORTED_AUDIO_FORMATS, COLOR_PALETTES, } from "@/constants";
+
+export type { PaletteTheme } from "@/constants";
 
 export type AudioSourceType = "recording" | "upload";
 
@@ -118,4 +120,16 @@ export interface ConfirmModalProps {
   onCancel: () => void;
 }
 
+export interface LayoutWord {
+  text: string;
+  size: number;
+  weight: number;
+  x?: number;
+  y?: number;
+  rotate?: number;
+}
 
+export interface WordCloudProps {
+  terms: SemanticTerm[];
+  onNewAnalysis?: () => void;
+}
