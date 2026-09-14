@@ -11,7 +11,6 @@ Turn live audio recordings or uploaded files into an instant visual summary answ
 WordWave is a focused, single-screen web utility built for one-to-one mentorship debriefs. It eliminates the need to replay 40-minute recordings by turning spoken conversations into an immediate visual word cloud alongside an executive summary and full transcript.
 
 ### Features & Working Capabilities:
-
 - **Live In-Browser Recording**:
   - Unmistakable live recording state with elapsed timer.
   - Automatic enforcement of the 10-minute (600s) recording ceiling.
@@ -51,7 +50,6 @@ WordWave is a focused, single-screen web utility built for one-to-one mentorship
 ## 2. How to Run Locally
 
 ### Prerequisites
-
 - Node.js 18.17+ or 20+
 - npm / pnpm / yarn
 - A Google Gemini API Key ([Get a free key from Google AI Studio](https://aistudio.google.com/))
@@ -59,33 +57,31 @@ WordWave is a focused, single-screen web utility built for one-to-one mentorship
 ### Setup Commands (in order)
 
 1. **Clone the repository:**
-
    ```bash
    git clone git@github.com:Muhammed-Jasir-M/Word-Wave.git
    cd wordwave
    ```
-2. **Install dependencies:**
 
+2. **Install dependencies:**
    ```bash
    npm install
    ```
+
 3. **Configure environment variables:**
    Create a `.env.local` file from the provided example:
-
    ```bash
    cp .env.example .env.local
    ```
-
    Open `.env.local` and add your Gemini API key:
-
    ```env
    GEMINI_API_KEY=your_gemini_api_key_here
    ```
-4. **Start the development server:**
 
+4. **Start the development server:**
    ```bash
    npm run dev
    ```
+
 5. **Open the app:**
    Open [http://localhost:3000](http://localhost:3000) in your browser (Chrome or Safari recommended).
 
@@ -96,7 +92,6 @@ WordWave is a focused, single-screen web utility built for one-to-one mentorship
 **Service Used**: **Google Gemini API** (`@google/genai`, utilizing `gemini-3.6-flash` / `gemini-3.5-flash`).
 
 ### Why Google Gemini:
-
 1. **Native Multimodal Audio Processing**: Gemini accepts audio files directly in base64 format without requiring a fragmented, two-step pipeline (e.g., Whisper for STT followed by an LLM prompt for analysis).
 2. **True Semantic Understanding**: Rather than a naive frequency counter that over-indexes on commonly repeated words, Gemini analyzes the actual context and semantic weight of topics discussed in the session.
 3. **Structured JSON Output**: Gemini's `responseSchema` ensures strict schema validation, returning consistent, typed data (transcript, summary, topics, and weighted terms) with zero JSON parsing failures.
@@ -131,7 +126,7 @@ WordWave is a focused, single-screen web utility built for one-to-one mentorship
 
 ## 6. AI Coding Tools Disclosure
 
-- **Tools Used**: Google Antigravity IDE / Gemini 3.6 Flash.
+- **Tools Used**: Google Antigravity IDE / Gemini 3.8 Flash.
 - **What it was used for**:
   - Scaffolding Next.js directory structure and TypeScript interfaces.
   - Designing SVG canvas export and `d3-cloud` integration types.

@@ -91,29 +91,16 @@ export function AudioPreview({
       <AudioPlayer src={audio.audioUrl} initialDuration={audio.duration} />
 
       {/* Upload Progress Bar */}
-      {isAnalyzing && (
-        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/90 space-y-1.5">
+      {isAnalyzing && uploadProgress !== null && uploadProgress < 100 && (
+        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/90 space-y-1.5 animate-fade-in">
           <div className="flex items-center justify-between text-xs font-medium text-slate-700">
-            <span>
-              {uploadProgress !== null && uploadProgress < 100
-                ? "Uploading audio file..."
-                : "Analyzing audio with Gemini AI..."}
-            </span>
-            <span className="font-mono font-bold text-indigo-600">
-              {uploadProgress !== null && uploadProgress < 100
-                ? `${uploadProgress}%`
-                : "Processing"}
-            </span>
+            <span>Uploading audio file...</span>
+            <span className="font-mono font-bold text-indigo-600">{uploadProgress}%</span>
           </div>
           <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-indigo-600 transition-all duration-150 rounded-full"
-              style={{
-                width:
-                  uploadProgress !== null && uploadProgress < 100
-                    ? `${Math.max(5, uploadProgress)}%`
-                    : "100%",
-              }}
+              style={{ width: `${Math.max(5, uploadProgress)}%` }}
             />
           </div>
         </div>

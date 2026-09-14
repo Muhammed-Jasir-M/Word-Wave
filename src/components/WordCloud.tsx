@@ -10,7 +10,7 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
   const [prevTerms, setPrevTerms] = useState<SemanticTerm[]>(terms);
   const [activeTerms, setActiveTerms] = useState<SemanticTerm[]>(terms || []);
   const [layoutWords, setLayoutWords] = useState<LayoutWord[]>([]);
-  const [isComputing, setIsComputing] = useState<boolean>(true);
+  const [isComputing, setIsComputing] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [selectedPalette, setSelectedPalette] = useState<PaletteTheme>("indigo");
   const [removedCount, setRemovedCount] = useState<number>(0);
@@ -32,11 +32,6 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
     }
 
     let isMounted = true;
-    const rafId = requestAnimationFrame(() => {
-      if (isMounted) {
-        setIsComputing(true);
-      }
-    });
 
     const weights = activeTerms.map((t) => t.weight);
     const minWeight = Math.min(...weights, 1);
@@ -82,16 +77,17 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
 
     return () => {
       isMounted = false;
-      cancelAnimationFrame(rafId);
     };
   }, [activeTerms]);
 
   const handleRemoveWord = (termText: string) => {
+    setIsComputing(true);
     setActiveTerms((prev) => prev.filter((t) => t.text.toLowerCase() !== termText.toLowerCase()));
     setRemovedCount((prev) => prev + 1);
   };
 
   const handleResetWords = () => {
+    setIsComputing(true);
     setActiveTerms(terms || []);
     setRemovedCount(0);
   };
@@ -185,13 +181,13 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
           {!isComputing && effectiveLayoutWords.length > 0 && (
             <button
               type="button"
               onClick={handleDownloadPNG}
               disabled={isDownloading}
-              className="min-h-10 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
             >
               {isDownloading ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
@@ -206,7 +202,7 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
             <button
               type="button"
               onClick={onNewAnalysis}
-              className="min-h-10 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 shrink-0"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Start New</span>
@@ -216,21 +212,24 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
       </div>
 
       {/* Colour Scheme & Word Removal Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+      <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 overflow-hidden">
         {/* Colour Palette Selector */}
-        <div className="flex items-center gap-2">
-          <Palette className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-          <span className="font-medium text-slate-600">Theme:</span>
-          <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+          <div className="flex items-center gap-1 shrink-0">
+            <Palette className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <span className="font-medium text-slate-600">Theme:</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1 min-w-0">
             {(Object.keys(COLOR_PALETTES) as PaletteTheme[]).map((key) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setSelectedPalette(key)}
-                className={`px-2 py-0.5 rounded-md font-medium transition-all ${selectedPalette === key
-                  ? "bg-white text-indigo-700 shadow-sm border border-indigo-200 font-semibold"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                  }`}
+                className={`px-2 py-0.5 rounded-md font-medium transition-all shrink-0 text-xs ${
+                  selectedPalette === key
+                    ? "bg-white text-indigo-700 shadow-xs border border-indigo-200 font-semibold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                }`}
               >
                 {COLOR_PALETTES[key].name.split(" ")[0]}
               </button>
@@ -243,7 +242,7 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
           <button
             type="button"
             onClick={handleResetWords}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium hover:bg-amber-100 transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium hover:bg-amber-100 transition-colors self-start sm:self-auto shrink-0"
           >
             <Undo2 className="w-3 h-3 text-amber-600" />
             <span>Reset {removedCount} Removed</span>
@@ -325,7 +324,7 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
       {!isComputing && activeTerms && activeTerms.length > 0 && (
         <div className="space-y-1.5 pt-1 border-t border-slate-100">
           <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-            Interactive Terms (Click X to remove term without re-analyzing)
+            Interactive Terms
           </p>
           <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
             {activeTerms.map((term, idx) => (
