@@ -7,16 +7,9 @@ import {
   AudioUploaderControls,
   AudioPayload,
 } from "@/types";
-import {
-  BRIEF_REF_5190_MAX_BYTES,
-  MAX_RECORDING_SECONDS,
-  SUPPORTED_AUDIO_FORMATS,
-} from "@/constants";
-import { formatFileSize, formatTime } from "@/utils/formatters";
-
-const SUPPORTED_EXTENSIONS = SUPPORTED_AUDIO_FORMATS.map((ext) =>
-  ext.toLowerCase()
-);
+import { MAX_RECORDING_SECONDS } from "@/constants";
+import { formatTime } from "@/utils/formatters";
+import { validateAudioFile } from "@/utils/audioValidation";
 
 export function useAudioUploader(): AudioUploaderState & AudioUploaderControls {
   const [status, setStatus] = useState<AudioUploaderStatus>("idle");
@@ -62,35 +55,10 @@ export function useAudioUploader(): AudioUploaderState & AudioUploaderControls {
     async (inputFile: File) => {
       setError(null);
 
-      if (!inputFile) {
-        setError("No file was selected.");
-        return;
-      }
-
-      // 1. Validate File Extension & Format
-      const fileExt = inputFile.name.split(".").pop()?.toLowerCase() || "";
-      const isExtensionSupported = SUPPORTED_EXTENSIONS.includes(fileExt);
-      const isMimeSupported =
-        inputFile.type.startsWith("audio/") ||
-        inputFile.type === "video/webm" ||
-        inputFile.type === "video/ogg";
-
-      if (!isExtensionSupported && !isMimeSupported) {
-        setError(
-          `Unsupported audio format. Supported formats: ${SUPPORTED_AUDIO_FORMATS.join(
-            ", "
-          )}.`
-        );
-        return;
-      }
-
-      // 2. Validate File Size against BRIEF_REF_5190_MAX_BYTES (25 MB)
-      if (inputFile.size > BRIEF_REF_5190_MAX_BYTES) {
-        setError(
-          `File size exceeds the ${formatFileSize(
-            BRIEF_REF_5190_MAX_BYTES
-          )} limit (selected file is ${formatFileSize(inputFile.size)}).`
-        );
+      // Validate format and size using shared utility
+      const validation = validateAudioFile(inputFile);
+      if (!validation.isValid) {
+        setError(validation.error || "Invalid file.");
         return;
       }
 

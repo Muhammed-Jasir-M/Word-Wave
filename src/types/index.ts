@@ -125,6 +125,16 @@ export interface AudioAnalysisResponse {
   modelUsed?: string;
 }
 
+export interface SessionAnalysisProps {
+  result: AudioAnalysisResponse;
+  currentAudioUrl?: string | null;
+  onDownloadAudio: () => void;
+  onCopySummary: () => void;
+  onCopyTranscript: () => void;
+  isSummaryCopied: boolean;
+  isTranscriptCopied: boolean;
+}
+
 export interface ConfirmModalProps {
   isOpen: boolean;
   title: string;

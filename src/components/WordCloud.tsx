@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef, useId } from "react";
 import cloud from "d3-cloud";
 import { SemanticTerm, WordCloudProps, LayoutWord, PaletteTheme } from "@/types";
 import { COLOR_PALETTES } from "@/constants";
+import { exportWordCloudPNG } from "@/utils/exportImage";
 import { Sparkles, RotateCcw, CloudOff, Download, Loader2, X, Palette, Undo2 } from "lucide-react";
 
 export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
@@ -101,63 +102,15 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
     return currentTheme.colors[index % currentTheme.colors.length];
   };
 
-  const handleDownloadPNG = () => {
+  const handleDownloadPNG = async () => {
     if (!svgRef.current || isDownloading) return;
     setIsDownloading(true);
 
     try {
-      const svgElement = svgRef.current;
-      const serializer = new XMLSerializer();
-
-      const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
-      clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-      clonedSvg.setAttribute("width", "1040");
-      clonedSvg.setAttribute("height", "600");
-
-      const bgRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      bgRect.setAttribute("width", "100%");
-      bgRect.setAttribute("height", "100%");
-      bgRect.setAttribute("fill", "#f8fafc");
-      clonedSvg.insertBefore(bgRect, clonedSvg.firstChild);
-
-      const svgString = serializer.serializeToString(clonedSvg);
-      const svgBlob = new Blob([svgString], {
-        type: "image/svg+xml;charset=utf-8",
-      });
-      const blobUrl = URL.createObjectURL(svgBlob);
-
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 1040;
-        canvas.height = 600;
-        const ctx = canvas.getContext("2d");
-
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          URL.revokeObjectURL(blobUrl);
-
-          const pngUrl = canvas.toDataURL("image/png");
-          const downloadLink = document.createElement("a");
-          const shortId = Math.random().toString(36).substring(2, 7);
-          downloadLink.href = pngUrl;
-          downloadLink.download = `wordwave-${shortId}.png`;
-          document.body.appendChild(downloadLink);
-          downloadLink.click();
-          document.body.removeChild(downloadLink);
-        }
-        setIsDownloading(false);
-      };
-
-      img.onerror = (err) => {
-        console.error("Failed to render SVG to canvas image for PNG download:", err);
-        URL.revokeObjectURL(blobUrl);
-        setIsDownloading(false);
-      };
-
-      img.src = blobUrl;
+      await exportWordCloudPNG(svgRef.current, "wordwave");
     } catch (err) {
       console.error("Failed to generate PNG download:", err);
+    } finally {
       setIsDownloading(false);
     }
   };

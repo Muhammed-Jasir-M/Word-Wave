@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Type } from "@google/genai";
-import { BRIEF_REF_5190_MAX_BYTES, SUPPORTED_AUDIO_FORMATS, GEMINI_CANDIDATE_MODELS } from "@/constants";
-
-const SUPPORTED_EXTENSIONS = SUPPORTED_AUDIO_FORMATS.map((ext) => ext.toLowerCase());
+import { GEMINI_CANDIDATE_MODELS } from "@/constants";
+import { validateAudioFile } from "@/utils/audioValidation";
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,33 +34,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate file format and size
-    const fileExt = file.name.split(".").pop()?.toLowerCase() || "";
-    const isExtensionSupported = SUPPORTED_EXTENSIONS.includes(fileExt);
-    const isMimeSupported =
-      file.type.startsWith("audio/") ||
-      file.type === "video/webm" ||
-      file.type === "video/ogg";
-
-    if (!isExtensionSupported && !isMimeSupported) {
+    // Validate file format and size using shared utility
+    const validation = validateAudioFile(file);
+    if (!validation.isValid) {
       return NextResponse.json(
-        {
-          error: `Unsupported audio format. Supported formats: ${SUPPORTED_AUDIO_FORMATS.join(
-            ", "
-          )}.`,
-        },
-        { status: 400 }
-      );
-    }
-
-    if (file.size > BRIEF_REF_5190_MAX_BYTES) {
-      return NextResponse.json(
-        {
-          error: `File size exceeds the 25 MB limit. Selected file size: ${(
-            file.size /
-            (1024 * 1024)
-          ).toFixed(2)} MB.`,
-        },
+        { error: validation.error },
         { status: 400 }
       );
     }
