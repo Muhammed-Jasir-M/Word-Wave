@@ -31,6 +31,10 @@ export function AudioRecorder({
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [isAutoStartPending, setIsAutoStartPending] = useState<boolean>(
+    () => autoStart && status === "idle"
+  );
+  const [isPermissionRequesting, setIsPermissionRequesting] = useState<boolean>(false);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasAutoStartedRef = useRef<boolean>(false);
 
@@ -49,14 +53,18 @@ export function AudioRecorder({
 
   const handleStartRecording = useCallback(async () => {
     stopCountdownTimer();
+    setIsPermissionRequesting(true);
+    clearError();
 
     const granted = await requestPermission();
+    setIsPermissionRequesting(false);
+    setIsAutoStartPending(false);
+
     if (!granted) {
       setCountdown(null);
       return;
     }
 
-    clearError();
     setCountdown(3);
     let count = 3;
     countdownTimerRef.current = setInterval(() => {
@@ -79,10 +87,18 @@ export function AudioRecorder({
     }
   }, [autoStart, status, handleStartRecording]);
 
+  const showReadyToRecord =
+    !isAutoStartPending &&
+    !isPermissionRequesting &&
+    !isPermissionPending &&
+    status === "idle" &&
+    countdown === null &&
+    !error;
+
   const handleBackClick = () => {
     stopCountdownTimer();
     setCountdown(null);
-    if (status === "recorded") {
+    if (status === "recorded" || status === "recording") {
       setIsConfirmModalOpen(true);
     } else {
       discardRecording();
@@ -97,6 +113,16 @@ export function AudioRecorder({
     discardRecording();
     if (onCancel) onCancel();
   };
+
+  const modalTitle =
+    status === "recording"
+      ? "Discard ongoing recording?"
+      : "Discard this recording?";
+
+  const modalDescription =
+    status === "recording"
+      ? "This will stop and discard your live recording. Are you sure you want to go back?"
+      : "This will throw away your current audio take. This action cannot be undone.";
 
   return (
     <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm transition-all relative">
@@ -115,7 +141,7 @@ export function AudioRecorder({
       )}
 
       {/* Idle / Ready to Record State */}
-      {!isPermissionPending && !error && status === "idle" && countdown === null && (
+      {showReadyToRecord && (
         <div className="text-center py-6 sm:py-8 space-y-4">
           <div className="w-12 h-12 mx-auto rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
             <Mic className="w-6 h-6" />
@@ -140,7 +166,7 @@ export function AudioRecorder({
       )}
 
       {/* Permission Pending State */}
-      {isPermissionPending && countdown === null && (
+      {(isPermissionPending || isPermissionRequesting) && countdown === null && !error && (
         <div className="text-center py-6 sm:py-8 space-y-4">
           <div className="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
             <Loader2 className="w-6 h-6 animate-spin" />
@@ -179,7 +205,7 @@ export function AudioRecorder({
       )}
 
       {/* Error Notice */}
-      {!isPermissionPending && error && (
+      {!(isPermissionPending || isPermissionRequesting) && error && (
         <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-xs text-amber-900 flex items-start gap-3">
           <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div className="flex-1">
@@ -188,10 +214,7 @@ export function AudioRecorder({
             <div className="mt-3.5 flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  clearError();
-                  handleStartRecording();
-                }}
+                onClick={handleStartRecording}
                 className="min-h-11 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -275,8 +298,8 @@ export function AudioRecorder({
       {/* Discard Confirmation Modal for Back Button */}
       <ConfirmModal
         isOpen={isConfirmModalOpen}
-        title="Discard this recording?"
-        description="This will throw away your current audio take. This action cannot be undone."
+        title={modalTitle}
+        description={modalDescription}
         confirmText="Discard"
         cancelText="Cancel"
         onConfirm={handleConfirmBackDiscard}
