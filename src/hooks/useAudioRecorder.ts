@@ -23,6 +23,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -44,8 +45,12 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     }
   }, []);
 
-  // Helper to cleanup media stream tracks
+  // Helper to cleanup media stream tracks and Web Audio keep-alive context
   const stopMediaStream = useCallback(() => {
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
@@ -86,11 +91,8 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     clearTimer();
   }, [clearTimer]);
 
-  // Start recording handler
-  const startRecording = useCallback(async () => {
-    setError(null);
-
-    // Check browser compatibility
+  // Request microphone permission and acquire stream without starting recorder
+  const requestPermission = useCallback(async (): Promise<boolean> => {
     if (
       typeof window === "undefined" ||
       !navigator.mediaDevices ||
@@ -98,10 +100,9 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       typeof window.MediaRecorder === "undefined"
     ) {
       setError("Audio recording is not supported in this browser.");
-      return;
+      return false;
     }
 
-    // Check if permission is already known to be denied
     let currentPermState: MicPermissionState = permissionState;
     if (navigator.permissions && navigator.permissions.query) {
       try {
@@ -118,11 +119,87 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
       setError(
         "Microphone access is blocked in your browser settings. Please click the lock icon near the address bar -> Site settings -> Microphone -> set to 'Allow', then click Try Again."
       );
-      return;
+      return false;
     }
 
-    // Only show permission pending spinner if permission status is prompt or unknown
-    setIsPermissionPending(true);
+    if (currentPermState !== "granted") {
+      setIsPermissionPending(true);
+    }
+
+    try {
+      if (!mediaStreamRef.current || !mediaStreamRef.current.active) {
+        stopMediaStream();
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaStreamRef.current = stream;
+
+        // Warm up microphone hardware pipeline via Web Audio API to prevent initial WASAPI hardware latency
+        try {
+          const AudioCtx =
+            window.AudioContext ||
+            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          if (AudioCtx) {
+            const ctx = new AudioCtx();
+            audioContextRef.current = ctx;
+            if (ctx.state === "suspended") {
+              await ctx.resume();
+            }
+            const source = ctx.createMediaStreamSource(stream);
+            const gain = ctx.createGain();
+            gain.gain.value = 0.00001; // Muted keep-alive stream
+            source.connect(gain);
+            gain.connect(ctx.destination);
+          }
+        } catch {
+          // Non-critical fallback
+        }
+      }
+      setPermissionState("granted");
+      setError(null);
+      setIsPermissionPending(false);
+      return true;
+    } catch (err: unknown) {
+      setIsPermissionPending(false);
+      stopMediaStream();
+      clearTimer();
+      setStatus("idle");
+
+      const errorObj = err as { name?: string; message?: string };
+      if (
+        errorObj.name === "NotAllowedError" ||
+        errorObj.name === "PermissionDeniedError"
+      ) {
+        setPermissionState("denied");
+        setError(
+          "Microphone access is blocked in your browser settings. Please click the lock icon near the address bar -> Site settings -> Microphone -> set to 'Allow', then click Try Again."
+        );
+      } else if (
+        errorObj.name === "NotFoundError" ||
+        errorObj.name === "DevicesNotFoundError"
+      ) {
+        setError("No microphone device was found on your system.");
+      } else {
+        setError(
+          errorObj.message || "Failed to access microphone. Please try again."
+        );
+      }
+      return false;
+    }
+  }, [permissionState, stopMediaStream, clearTimer]);
+
+  // Start recording handler
+  const startRecording = useCallback(async () => {
+    setError(null);
+
+    // Check browser compatibility
+    if (
+      typeof window === "undefined" ||
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia ||
+      typeof window.MediaRecorder === "undefined"
+    ) {
+      setError("Audio recording is not supported in this browser.");
+      return;
+    }
 
     try {
       // Cleanup previous recording if any
@@ -131,11 +208,17 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
         setAudioUrl(null);
       }
 
-      // Request microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-      setPermissionState("granted");
-      setIsPermissionPending(false);
+      let stream = mediaStreamRef.current;
+      if (!stream || !stream.active || stream.getAudioTracks().every((t) => t.readyState === "ended")) {
+        const ok = await requestPermission();
+        if (!ok) return;
+        stream = mediaStreamRef.current;
+      }
+
+      if (!stream) {
+        setError("Failed to access microphone stream.");
+        return;
+      }
 
       // Select supported MIME type
       let options: MediaRecorderOptions = {};
@@ -194,12 +277,14 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
         setStatus("recorded");
       };
 
-      recorder.start();
+      // Start recording with continuous 100ms timeslice to ensure zero initial buffering latency
+      recorder.start(100);
       startTimeRef.current = Date.now();
       setStatus("recording");
       setRecordingTime(0);
 
       // Start elapsed timer
+      clearTimer();
       timerRef.current = setInterval(() => {
         setRecordingTime((prevTime) => {
           const nextTime = prevTime + 1;
@@ -236,7 +321,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
         );
       }
     }
-  }, [audioUrl, cleanupAudioUrl, stopMediaStream, clearTimer, stopRecording, permissionState]);
+  }, [audioUrl, cleanupAudioUrl, stopMediaStream, clearTimer, stopRecording, requestPermission]);
 
   // Discard recording handler
   const discardRecording = useCallback(() => {
@@ -273,6 +358,7 @@ export function useAudioRecorder(): AudioRecorderState & AudioRecorderControls {
     isPermissionPending,
     permissionState,
     startRecording,
+    requestPermission,
     stopRecording,
     discardRecording,
     clearError,

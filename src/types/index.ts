@@ -52,6 +52,7 @@ export interface AudioRecorderState {
 
 export interface AudioRecorderControls {
   startRecording: () => Promise<void>;
+  requestPermission: () => Promise<boolean>;
   stopRecording: () => void;
   discardRecording: () => void;
   clearError: () => void;
@@ -64,6 +65,7 @@ export interface AudioRecorderProps {
   isAnalyzing?: boolean;
   uploadProgress?: number | null;
   analysisError?: string | null;
+  autoStart?: boolean;
 }
 
 export type AudioUploaderStatus = "idle" | "validating" | "uploaded";

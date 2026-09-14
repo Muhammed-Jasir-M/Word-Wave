@@ -13,7 +13,7 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useAudioUploader } from "@/hooks/useAudioUploader";
 import { AudioPayload, AudioAnalysisResponse, SavedSession, AppMode } from "@/types";
 import { getSessionsDB, saveSessionDB, deleteSessionDB, clearSessionsDB } from "@/utils/db";
-import { Sparkles, FileText, Hash, Globe, Tag, Copy, Check, Heart, ExternalLink, Volume2 } from "lucide-react";
+import { Sparkles, FileText, Hash, Globe, Tag, Copy, Check, Heart, ExternalLink, Volume2, Download } from "lucide-react";
 
 export default function Home() {
   const [activeMode, setActiveMode] = useState<AppMode>("idle");
@@ -23,6 +23,7 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<AudioAnalysisResponse | null>(null);
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [isSummaryCopied, setIsSummaryCopied] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
 
@@ -78,9 +79,8 @@ export default function Home() {
     setIsHistoryOpen(false);
   };
 
-  const handleRecordClick = async () => {
+  const handleRecordClick = () => {
     setActiveMode("record");
-    await recorder.startRecording();
   };
 
   const handleUploadClick = () => {
@@ -92,6 +92,24 @@ export default function Home() {
     navigator.clipboard.writeText(analysisResult.transcript);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleCopySummary = () => {
+    if (!analysisResult?.summary) return;
+    navigator.clipboard.writeText(analysisResult.summary);
+    setIsSummaryCopied(true);
+    setTimeout(() => setIsSummaryCopied(false), 2000);
+  };
+
+  const handleDownloadAudio = () => {
+    if (!currentAudioUrl) return;
+    const a = document.createElement("a");
+    const shortId = Math.random().toString(36).substring(2, 7);
+    a.href = currentAudioUrl;
+    a.download = `wordwave-${shortId}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const handleBackToOptions = () => {
@@ -253,10 +271,21 @@ export default function Home() {
               {/* Saved Audio Recording Playback Player */}
               {currentAudioUrl && (
                 <div className="space-y-1.5 pt-1">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <Volume2 className="w-3.5 h-3.5 text-indigo-600" />
-                    Session Audio Playback
-                  </h4>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <Volume2 className="w-3.5 h-3.5 text-indigo-600" />
+                      Session Audio Playback
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={handleDownloadAudio}
+                      className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 cursor-pointer whitespace-nowrap self-start sm:self-auto"
+                      title="Download audio recording"
+                    >
+                      <Download className="w-3 h-3 text-slate-500 shrink-0" />
+                      <span>Download Audio</span>
+                    </button>
+                  </div>
                   <AudioPlayer src={currentAudioUrl} />
                 </div>
               )}
@@ -271,12 +300,35 @@ export default function Home() {
                   <Hash className="w-3.5 h-3.5 text-slate-500" />
                   Words: <strong className="text-slate-900">{analysisResult.wordCount}</strong>
                 </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                  <FileText className="w-3.5 h-3.5 text-slate-500" />
+                  Characters: <strong className="text-slate-900">{(analysisResult.transcript || "").length}</strong>
+                </span>
               </div>
 
               {/* Summary */}
-              <div className="space-y-1">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Summary</h4>
-                <p className="text-sm text-slate-800 leading-relaxed bg-slate-50/80 p-3 rounded-xl border border-slate-200/60">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Summary</h4>
+                  <button
+                    type="button"
+                    onClick={handleCopySummary}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 cursor-pointer"
+                  >
+                    {isSummaryCopied ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-600" />
+                        <span className="text-emerald-700 font-semibold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3 text-slate-500" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="text-sm text-slate-800 leading-relaxed bg-slate-50/80 p-3 rounded-xl border border-slate-200/60 font-sans">
                   {analysisResult.summary}
                 </p>
               </div>

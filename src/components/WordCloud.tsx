@@ -139,9 +139,9 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
 
           const pngUrl = canvas.toDataURL("image/png");
           const downloadLink = document.createElement("a");
-          const dateStr = new Date().toISOString().slice(0, 10);
+          const shortId = Math.random().toString(36).substring(2, 7);
           downloadLink.href = pngUrl;
-          downloadLink.download = `wordwave-word-cloud-${dateStr}.png`;
+          downloadLink.download = `wordwave-${shortId}.png`;
           document.body.appendChild(downloadLink);
           downloadLink.click();
           document.body.removeChild(downloadLink);
@@ -205,7 +205,7 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
               className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 shrink-0"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Start New</span>
+              <span>New Analysis</span>
             </button>
           )}
         </div>
@@ -302,9 +302,13 @@ export function WordCloud({ terms, onNewAnalysis }: WordCloudProps) {
                   key={`${word.text}-${idx}`}
                   textAnchor="middle"
                   transform={`translate(${word.x || 0}, ${word.y || 0}) rotate(${word.rotate || 0})`}
+                  fill={getWordColor(idx, word.weight)}
+                  fontWeight="700"
+                  fontFamily="ui-sans-serif, system-ui, -apple-system, sans-serif"
                   style={{
                     fontSize: `${word.size}px`,
                     fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
+                    fontWeight: "700",
                     fill: getWordColor(idx, word.weight),
                   }}
                   filter={`url(#shadow-${filterId})`}
